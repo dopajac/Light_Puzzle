@@ -1588,9 +1588,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bulletPrefab: {fileID: 2468357559366932461, guid: 39da1423ea0dedc479d19f332d383079, type: 3}
-  Player: {fileID: 0}
   bulletSpeed: 10
-  count: 0
+  Player: {fileID: 0}
 --- !u!4 &624420234
 Transform:
   m_ObjectHideFlags: 0
@@ -2211,6 +2210,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerPrefab: {fileID: 3497077492343531111, guid: 90029f65cff8d364a9db84fd48e3c234, type: 3}
+  spawnPoint: {fileID: 0}
 --- !u!4 &1679648532
 Transform:
   m_ObjectHideFlags: 0
