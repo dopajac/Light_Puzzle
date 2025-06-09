@@ -11,8 +11,13 @@ public class PlayerShoot : MonoBehaviour
     private List<GameObject> bullets = new List<GameObject>();
     
     public int count = 0; // 총알 인덱스
+    private void Awake()
+    {
+        DontDestroyOnLoad(gameObject);
+    }
     private void Start()
     {
+        Player = GameObject.Find("Player(Clone)");
         for(int i = 0; i < 10; i++)
         {
             GameObject bullet = Instantiate(bulletPrefab, transform.position, Quaternion.identity);

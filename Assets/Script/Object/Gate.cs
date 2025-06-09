@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Gate : MonoBehaviour
 {
@@ -10,6 +11,7 @@ public class Gate : MonoBehaviour
         if (isPlayerNear && Input.GetKeyDown(KeyCode.F))
         {
             Debug.Log("게이트와 상호작용 중입니다.");
+            SceneManager.LoadScene(2);
             // 여기서 문 열기, 장면 전환 등 원하는 동작 추가
         }
     }
