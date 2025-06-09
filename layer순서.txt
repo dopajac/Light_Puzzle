@@ -1,0 +1,6 @@
+background 0
+
+bridge 2
+gate 2
+
+player 3
