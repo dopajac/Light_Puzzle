@@ -1,62 +1,89 @@
-using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerShoot : MonoBehaviour
 {
-    public GameObject bulletPrefab;  // 만든 총알 프리팹
-    public GameObject Player;  // 만든 총알 프리팹
-    [SerializeField]private float bulletSpeed = 10f;
+    [Header("총알 세팅")]
+    public GameObject bulletPrefab;
+    [SerializeField] private float bulletSpeed = 10f;
+    private static List<GameObject> bullets = new List<GameObject>();
+    private static bool bulletsInitialized = false;
+    private int count = 0;
 
-    private List<GameObject> bullets = new List<GameObject>();
-    
-    public int count = 0; // 총알 인덱스
+    [Header("플레이어 참조")]
+    public GameObject Player;
+
     private void Awake()
     {
         DontDestroyOnLoad(gameObject);
     }
-    private void Start()
+
+    private void OnEnable()
     {
-        Player = GameObject.Find("Player(Clone)");
-        for(int i = 0; i < 10; i++)
-        {
-            GameObject bullet = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
-            bullets.Add(bullet);
-        }
-        
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    void Update()
+    private void OnDisable()
     {
-        if (Input.GetMouseButtonDown(0)) // 왼쪽 클릭
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void Start()
+    {
+        // 총알 풀 초기화 (딱 한 번만)
+        if (!bulletsInitialized)
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                GameObject bullet = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
+                bullet.SetActive(false);
+                DontDestroyOnLoad(bullet); // 씬 넘겨도 유지
+                bullets.Add(bullet);
+            }
+            bulletsInitialized = true;
+        }
+    }
+
+    private void Update()
+    {
+        // 플레이어가 할당되지 않은 경우 계속 찾아줌
+        if (Player == null)
+        {
+            Player = GameObject.Find("Player(Clone)");
+        }
+
+        if (Player != null && Input.GetMouseButtonDown(0))
         {
             Shoot();
         }
     }
 
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // 씬 바뀔 때마다 플레이어 다시 탐색
+        Player = GameObject.Find("Player(Clone)");
+    }
+
+    public void SetPlayer(GameObject p)
+    {
+        Player = p;
+    }
+
     void Shoot()
     {
-        // 1. 마우스 클릭 위치를 월드 좌표로 변환
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mouseWorldPos.z = 0f;
-
-        // 2. 방향 벡터 구하기
         Vector2 direction = (mouseWorldPos - Player.transform.position).normalized;
-        
-        // 3. 총알에 힘 주기 (Rigidbody2D 필요)
+
         GameObject bullet = bullets[count];
-        bullet.gameObject.SetActive(true);
-        
         bullet.transform.position = Player.transform.position;
+        bullet.SetActive(true);
+
         Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
         rb.velocity = direction * bulletSpeed;
-        
-        count++;
 
-        if (count == 10)
-        {
-            count = 0; // 총알을 다 쏘면 다시 처음부터
-        }
-
+        count = (count + 1) % bullets.Count;
     }
 }

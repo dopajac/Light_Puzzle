@@ -6,9 +6,10 @@ using UnityEngine.SceneManagement;
 public class SpawnPlayer : MonoBehaviour
 {
     [SerializeField] private GameObject playerPrefab;
-    [SerializeField] Transform spawnPoint;
+    [SerializeField] private Transform spawnPoint;
 
-    
+    private GameObject currentPlayer;
+
     private void Awake()
     {
         DontDestroyOnLoad(gameObject);
@@ -26,7 +27,13 @@ public class SpawnPlayer : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // 새 씬에서 SpawnPoint 찾아서 할당
+        StartCoroutine(SpawnWithDelay());
+    }
+
+    private IEnumerator SpawnWithDelay()
+    {
+        yield return new WaitForSeconds(0.1f); // 씬 로딩 대기
+
         GameObject found = GameObject.Find("SpawnPoint");
         if (found != null)
         {
@@ -43,17 +50,20 @@ public class SpawnPlayer : MonoBehaviour
     {
         if (playerPrefab != null && spawnPoint != null)
         {
-            if (SceneManager.GetActiveScene().buildIndex == 1)
+            if (currentPlayer == null)
             {
-                Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
+                // 플레이어가 아직 없으면 생성
+                var player = currentPlayer = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
+                DontDestroyOnLoad(player);
+                
+                FindObjectOfType<PlayerShoot>().SetPlayer(player);
             }
-
             else
             {
-                
+                // 이미 있으면 위치만 이동
+                currentPlayer.transform.position = spawnPoint.position;
+                currentPlayer.transform.rotation = spawnPoint.rotation;
             }
-
-            
         }
         else
         {

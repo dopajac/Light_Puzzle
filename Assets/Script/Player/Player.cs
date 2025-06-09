@@ -7,10 +7,7 @@ public class Player : MonoBehaviour
 
     private Rigidbody2D rb;
     private bool isGrounded;
-    private void Awake()
-    {
-        DontDestroyOnLoad(gameObject);
-    }
+    
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
