@@ -5,6 +5,8 @@ public class Player : MonoBehaviour
     public float moveSpeed = 5f;
     public float jumpForce = 10f;
 
+    public Transform respawnPoint;
+    
     private Rigidbody2D rb;
     private bool isGrounded;
     
@@ -43,6 +45,22 @@ public class Player : MonoBehaviour
         {
             isGrounded = true;
         }
+        
+        if(collision.gameObject.CompareTag("Respawn2"))
+        { 
+            Transform respawnPoint = GameObject.Find("SpawnPoint")?.transform;
+           if (respawnPoint != null)
+           {
+               transform.position = respawnPoint.transform.position;
+           }
+           else
+           {
+               Debug.LogError("SpawnPoint 오브젝트를 찾을 수 없습니다.");
+           }
+           
+        }
     }
+    
+    
     
 }
