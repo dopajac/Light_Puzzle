@@ -3,15 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class PlayerShoot : MonoBehaviour
+public class BulletSpawner : MonoBehaviour
 {
     [Header("총알 세팅")]
     public GameObject bulletPrefab;
-    [SerializeField] private float bulletSpeed = 10f;
-    private static List<GameObject> bullets = new List<GameObject>();
+    
     private static bool bulletsInitialized = false;
-    private int count = 0;
-
+    
+    
     [Header("플레이어 참조")]
     public GameObject Player;
 
@@ -38,9 +37,9 @@ public class PlayerShoot : MonoBehaviour
             for (int i = 0; i < 10; i++)
             {
                 GameObject bullet = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
-                bullet.SetActive(false);
+                bullet.SetActive(true);
                 DontDestroyOnLoad(bullet); // 씬 넘겨도 유지
-                bullets.Add(bullet);
+                GameManager.Instance.bullets.Add(bullet);
             }
             bulletsInitialized = true;
         }
@@ -52,11 +51,6 @@ public class PlayerShoot : MonoBehaviour
         if (Player == null)
         {
             Player = GameObject.Find("Player(Clone)");
-        }
-
-        if (Player != null && Input.GetMouseButtonDown(0))
-        {
-            Shoot();
         }
     }
 
@@ -71,19 +65,5 @@ public class PlayerShoot : MonoBehaviour
         Player = p;
     }
 
-    void Shoot()
-    {
-        Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mouseWorldPos.z = 0f;
-        Vector2 direction = (mouseWorldPos - Player.transform.position).normalized;
-
-        GameObject bullet = bullets[count];
-        bullet.transform.position = Player.transform.position;
-        bullet.SetActive(true);
-
-        Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
-        rb.velocity = direction * bulletSpeed;
-
-        count = (count + 1) % bullets.Count;
-    }
+   
 }

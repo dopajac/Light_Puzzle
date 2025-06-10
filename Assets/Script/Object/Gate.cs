@@ -4,14 +4,16 @@ using UnityEngine.SceneManagement;
 public class Gate : MonoBehaviour
 {
     private bool isPlayerNear = false;
-
     [SerializeField] private GameObject Floating_F;
     private void Update()
     {
         if (isPlayerNear && Input.GetKeyDown(KeyCode.F))
         {
             Debug.Log("게이트와 상호작용 중입니다.");
-            SceneManager.LoadScene(2);
+            
+            GameManager.Instance.Clear();
+            int currentStage = GameManager.Instance.GetStageNum();
+            SceneManager.LoadScene(currentStage);
             // 여기서 문 열기, 장면 전환 등 원하는 동작 추가
         }
     }

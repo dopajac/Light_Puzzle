@@ -56,7 +56,8 @@ public class SpawnPlayer : MonoBehaviour
                 var player = currentPlayer = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
                 DontDestroyOnLoad(player);
                 
-                FindObjectOfType<PlayerShoot>().SetPlayer(player);
+                FindObjectOfType<BulletSpawner>().SetPlayer(player);
+                FindObjectOfType<LineSpawner>().SetPlayer(player);
             }
             else
             {

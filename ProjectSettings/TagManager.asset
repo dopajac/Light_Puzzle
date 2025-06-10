@@ -7,15 +7,16 @@ TagManager:
   - Ground
   - bridge
   - Respawn2
+  - Mirror
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Player
   - Water
   - UI
-  - 
-  - 
+  - Bullet
+  - Mirror
   - 
   - 
   - 

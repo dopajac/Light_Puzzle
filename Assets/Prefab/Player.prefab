@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8822378551904323005}
   - component: {fileID: 4682004854023726957}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Light 2D
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -95,7 +95,7 @@ GameObject:
   - component: {fileID: 6884188407481136384}
   - component: {fileID: 3485510302086066874}
   - component: {fileID: 842344406267695557}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -111,7 +111,7 @@ Transform:
   m_GameObject: {fileID: 3497077492343531111}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -9.7, y: -0.93, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 4, y: 4, z: 4}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -184,6 +184,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 5
   jumpForce: 5
+  respawnPoint: {fileID: 0}
+  bulletSpeed: 10
+  LazerPrefab: {fileID: 0}
+  lightPrefab: {fileID: 8993569665090088666, guid: 9cba051216d00924882dff5e67e62248, type: 3}
+  reflectLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  maxReflections: 5
+  laserMaxDistance: 100
 --- !u!61 &3485510302086066874
 BoxCollider2D:
   m_ObjectHideFlags: 0
