@@ -2234,7 +2234,7 @@ GameObject:
   - component: {fileID: 1408312078}
   m_Layer: 8
   m_Name: prism
-  m_TagString: Prism
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2905,11 +2905,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2186636237753038941, guid: 88095be9c473de54b9709e9529657815, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.28
+      value: -2.2
       objectReference: {fileID: 0}
     - target: {fileID: 2186636237753038941, guid: 88095be9c473de54b9709e9529657815, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.62
+      value: 2.46
       objectReference: {fileID: 0}
     - target: {fileID: 2186636237753038941, guid: 88095be9c473de54b9709e9529657815, type: 3}
       propertyPath: m_LocalPosition.z
