@@ -41,7 +41,7 @@ public class LineSpawner : MonoBehaviour
             yield return new WaitForSeconds(0.1f); // ✅ 0.1초 딜레이
 
             GameObject Lazer = Instantiate(LazerPrefab, new Vector3(0,0,0), Quaternion.identity);
-            Lazer.SetActive(true);
+            Lazer.SetActive(true); 
             DontDestroyOnLoad(Lazer);
 
             LazerInitialized = true;
