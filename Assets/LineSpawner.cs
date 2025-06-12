@@ -7,9 +7,8 @@ public class LineSpawner : MonoBehaviour
 {
     [Header("레이저 세팅")]
     public GameObject LazerPrefab;
-    
+
     private static bool LazerInitialized = false;
-    
     
     [Header("플레이어 참조")]
     public GameObject Player;
@@ -31,18 +30,21 @@ public class LineSpawner : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(InitializeLazerWithDelay());
+        StartCoroutine(InitializeLazersWithDelay());
     }
 
-    IEnumerator InitializeLazerWithDelay()
+    IEnumerator InitializeLazersWithDelay()
     {
         if (!LazerInitialized)
         {
-            yield return new WaitForSeconds(0.1f); // ✅ 0.1초 딜레이
+            yield return new WaitForSeconds(0.1f);
 
-            GameObject Lazer = Instantiate(LazerPrefab, new Vector3(0,0,0), Quaternion.identity);
-            Lazer.SetActive(true); 
-            DontDestroyOnLoad(Lazer);
+            for (int i = 0; i < 3; i++) // 3갈래 레이저 생성
+            {
+                GameObject laser = Instantiate(LazerPrefab, Vector3.zero, Quaternion.identity);
+                laser.SetActive(true);
+                DontDestroyOnLoad(laser);
+            }
 
             LazerInitialized = true;
         }
@@ -50,7 +52,6 @@ public class LineSpawner : MonoBehaviour
 
     private void Update()
     {
-        // 플레이어가 할당되지 않은 경우 계속 찾아줌
         if (Player == null)
         {
             Player = GameObject.Find("Player(Clone)");
@@ -59,7 +60,6 @@ public class LineSpawner : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // 씬 바뀔 때마다 플레이어 다시 탐색
         Player = GameObject.Find("Player(Clone)");
     }
 
@@ -67,6 +67,4 @@ public class LineSpawner : MonoBehaviour
     {
         Player = p;
     }
-
-   
 }

@@ -29,7 +29,7 @@ public class Player : MonoBehaviour
     [Header("Laser Settings")]
     [SerializeField] private LayerMask interactionLayers;
     [SerializeField] private int maxReflections = 5;
-    [SerializeField] private float laserMaxDistance = 100f;
+    [SerializeField] private float laserMaxDistance = 10f;
 
     void Start()
     {
@@ -115,83 +115,28 @@ public class Player : MonoBehaviour
     // -------------------- Main Laser Logic --------------------
     void FireLaser()
     {
-        DisableLaser();
-
-        GameObject laserObj = GameObject.Find("Lazer(Clone)");
-        if (laserObj == null || !laserObj.TryGetComponent(out lineRenderer))
-        {
-            Debug.LogWarning("Lazer 오브젝트를 찾을 수 없거나 LineRenderer 없음");
-            return;
-        }
+        DisableLaser(); // 이전 레이저 + 라이트 제거
 
         Vector3 origin = transform.position;
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mouseWorldPos.z = 0f;
         Vector2 direction = (mouseWorldPos - origin).normalized;
 
-        List<Vector3> points = new List<Vector3> { origin };
-        Vector2 currentPos = origin;
-        Vector2 currentDir = direction;
-        Collider2D lastCollider = null;
-
-        for (int i = 0; i < maxReflections; i++)
+        for (int i = 0; i < 3; i++)
         {
-            RaycastHit2D hit = Physics2D.Raycast(currentPos, currentDir, laserMaxDistance, interactionLayers);
-            float refraction = 1f;
-
-            if (hit.collider != null && hit.distance > 0.01f && hit.collider != lastCollider)
-            {
-                points.Add(hit.point);
-                lastCollider = hit.collider;
-
-                string layerName = LayerMask.LayerToName(hit.collider.gameObject.layer);
-
-                if (layerName == "Refract")
-                {
-                    if (hit.collider.CompareTag("Water")) refraction = 2f;
-                    currentDir = Refract(currentDir, hit.normal, 1f, refraction);
-                }
-                else if (layerName == "Reflect")
-                {
-                    currentDir = Vector2.Reflect(currentDir, hit.normal);
-                }
-                else if (layerName == "Prism")
-                {
-                    Vector2 refractedDir = Refract(currentDir, hit.normal, 1f, 1.5f);
-                    Vector2 branchDir1 = Quaternion.Euler(0, 0, 15) * refractedDir;
-                    Vector2 branchDir2 = Quaternion.Euler(0, 0, -15) * refractedDir;
-                    Vector2 hitPoint = hit.point;
-
-                    StartCoroutine(FireLaserBranch(hitPoint + refractedDir.normalized * 0.1f, refractedDir, i + 1));
-                    StartCoroutine(FireLaserBranch(hitPoint + branchDir1.normalized * 0.1f, branchDir1, i + 1));
-                    StartCoroutine(FireLaserBranch(hitPoint + branchDir2.normalized * 0.1f, branchDir2, i + 1));
-
-                    points.Add(hit.point);
-                    break;
-                }
-
-                currentPos = hit.point + currentDir.normalized;
-            }
-            else
-            {
-                points.Add(currentPos + currentDir * laserMaxDistance);
-                break;
-            }
+            FireLaserBeam(origin, direction, i);
+            // 이 안에서 각각 SpawnLightsAlongLaser 호출되니까 OK
         }
-
-        lineRenderer.positionCount = points.Count;
-        lineRenderer.SetPositions(points.ToArray());
-        SpawnLightsAlongLaser(points);
     }
 
-    IEnumerator FireLaserBranch(Vector2 origin, Vector2 direction, int startDepth)
+     void FireLaserBeam(Vector2 origin, Vector2 direction, int type)
     {
         List<Vector3> points = new List<Vector3> { origin };
         Vector2 currentPos = origin;
         Vector2 currentDir = direction;
         Collider2D lastCollider = null;
 
-        for (int i = startDepth; i < maxReflections; i++)
+        for (int i = 0; i < maxReflections; i++)
         {
             RaycastHit2D hit = Physics2D.Raycast(currentPos, currentDir, laserMaxDistance, interactionLayers);
             if (hit.collider != null && hit.distance > 0.01f && hit.collider != lastCollider)
@@ -202,13 +147,26 @@ public class Player : MonoBehaviour
                 string layerName = LayerMask.LayerToName(hit.collider.gameObject.layer);
 
                 if (layerName == "Reflect")
+                {
                     currentDir = Vector2.Reflect(currentDir, hit.normal);
+                }
                 else if (layerName == "Refract")
+                {
                     currentDir = Refract(currentDir, hit.normal, 1f, 1.5f);
-                else
-                    break;
+                }
+                else if (layerName == "Prism")
+                {
+                    if (type == 1)
+                        currentDir = Quaternion.Euler(0, 0, +15) * currentDir;
+                    else if (type == 2)
+                        currentDir = Quaternion.Euler(0, 0, -15) * currentDir;
 
-                currentPos = hit.point + currentDir.normalized * 0.1f;
+                    currentPos = hit.point + currentDir.normalized *1.5f;
+                    points.Add(currentPos);
+                    continue;
+                }
+
+                currentPos = hit.point + currentDir.normalized * 1.5f;
             }
             else
             {
@@ -225,13 +183,12 @@ public class Player : MonoBehaviour
         lr.positionCount = points.Count;
         lr.SetPositions(points.ToArray());
 
-        yield return null;
+        SpawnLightsAlongLaser(points);
     }
 
     // -------------------- Light Handling --------------------
     void SpawnLightsAlongLaser(List<Vector3> points)
     {
-        ClearOldLights();
         float lightSpacing = 1.5f;
 
         for (int i = 0; i < points.Count - 1; i++)
