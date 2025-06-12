@@ -188,7 +188,7 @@ MonoBehaviour:
   bulletSpeed: 10
   LazerPrefab: {fileID: 6620511605608182950, guid: c3180d06d81a24d40918cc732971230a, type: 3}
   lightPrefab: {fileID: 8993569665090088666, guid: 9cba051216d00924882dff5e67e62248, type: 3}
-  reflectLayer:
+  interactionLayers:
     serializedVersion: 2
     m_Bits: 384
   maxReflections: 5

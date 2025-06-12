@@ -20,7 +20,7 @@ public class Player : MonoBehaviour
     private Queue<GameObject> lightPool = new Queue<GameObject>();
     private int maxLightCount = 100;
 
-    [SerializeField] private LayerMask reflectLayer;
+    [SerializeField] private LayerMask interactionLayers;
     [SerializeField] private int maxReflections = 5;
     [SerializeField] private float laserMaxDistance = 100f;
 
@@ -112,46 +112,49 @@ public class Player : MonoBehaviour
     Vector2 currentDir = direction;
 
     Collider2D lastCollider = null;
-
-    HashSet<Collider2D> recentHits = new HashSet<Collider2D>();
+    const float safeOffset = 0.3f; // 🎯 이전보다 더 크게 설정
 
     for (int i = 0; i < maxReflections; i++)
     {
-        RaycastHit2D hit = Physics2D.Raycast(currentPos, currentDir, laserMaxDistance, reflectLayer);
+        RaycastHit2D hit = Physics2D.Raycast(currentPos, currentDir, laserMaxDistance, interactionLayers);
 
-        if (hit.collider != null && !recentHits.Contains(hit.collider) && hit.distance > 0.01f)
+        if (hit.collider != null && hit.distance > 0.01f && hit.collider != lastCollider)
         {
-            // ✅ 여기서 히트 위치가 너무 가까운지 확인
-            if (Vector2.Distance(currentPos, hit.point) < 0.05f)
-            {
-                Debug.Log("무한 루프 방지: Hit 위치 너무 가까움");
-                break;
-            }
-
             points.Add(hit.point);
+            lastCollider = hit.collider;
+
             string layerName = LayerMask.LayerToName(hit.collider.gameObject.layer);
-            Debug.Log($"Hit {hit.collider.name} | Layer: {layerName} | Dir: {currentDir}");
+            Debug.Log($"[반응 {i}] 충돌 오브젝트: {hit.collider.name} | Layer: {layerName}");
 
             if (layerName == "Refract")
             {
                 currentDir = Refract(currentDir, hit.normal, 1f, 1.5f);
+                Debug.Log($"굴절 방향: {currentDir}");
             }
             else if (layerName == "Reflect")
             {
                 currentDir = Vector2.Reflect(currentDir, hit.normal);
+                Debug.Log($"반사 방향: {currentDir}");
             }
 
-            currentPos = hit.point + currentDir.normalized * 0.1f;
+            currentPos = hit.point + currentDir.normalized;
         }
         else
         {
-            points.Add(currentPos + currentDir * laserMaxDistance);
+            Vector2 endPoint = currentPos + currentDir * laserMaxDistance;
+            points.Add(endPoint);
+            Debug.Log("충돌 없음, 루프 종료");
             break;
         }
+
+        Debug.DrawRay(currentPos, currentDir * 5f, Color.red, 0.5f);
+        //Debug.Break();
+
     }
 
     lineRenderer.positionCount = points.Count;
     lineRenderer.SetPositions(points.ToArray());
+
     SpawnLightsAlongLaser(points);
 }
     Vector2 Refract(Vector2 incident, Vector2 normal, float n1, float n2)
@@ -177,7 +180,7 @@ public class Player : MonoBehaviour
             return Vector2.Reflect(incident, normal);
         }
 
-        return refracted.normalized;
+        return refracted;
     }
     void SpawnLightsAlongLaser(List<Vector3> points)
     {
