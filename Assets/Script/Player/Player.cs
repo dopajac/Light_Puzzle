@@ -92,71 +92,82 @@ public class Player : MonoBehaviour
     }
 
     void FireLaser()
-{
-    GameObject laserObj = GameObject.Find("Lazer(Clone)");
-    if (laserObj == null || laserObj.GetComponent<LineRenderer>() == null)
     {
-        Debug.LogWarning("Lazer 오브젝트를 찾을 수 없거나 LineRenderer 없음");
-        return;
-    }
-
-    lineRenderer = laserObj.GetComponent<LineRenderer>();
-
-    Vector3 origin = transform.position;
-    Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-    mouseWorldPos.z = 0f;
-    Vector2 direction = (mouseWorldPos - origin).normalized;
-
-    List<Vector3> points = new List<Vector3> { origin };
-    Vector2 currentPos = origin;
-    Vector2 currentDir = direction;
-
-    Collider2D lastCollider = null;
-    const float safeOffset = 0.3f; // 🎯 이전보다 더 크게 설정
-
-    for (int i = 0; i < maxReflections; i++)
-    {
-        RaycastHit2D hit = Physics2D.Raycast(currentPos, currentDir, laserMaxDistance, interactionLayers);
-
-        if (hit.collider != null && hit.distance > 0.01f && hit.collider != lastCollider)
+        GameObject laserObj = GameObject.Find("Lazer(Clone)");
+        if (laserObj == null || laserObj.GetComponent<LineRenderer>() == null)
         {
-            points.Add(hit.point);
-            lastCollider = hit.collider;
-
-            string layerName = LayerMask.LayerToName(hit.collider.gameObject.layer);
-            Debug.Log($"[반응 {i}] 충돌 오브젝트: {hit.collider.name} | Layer: {layerName}");
-
-            if (layerName == "Refract")
-            {
-                currentDir = Refract(currentDir, hit.normal, 1f, 1.5f);
-                Debug.Log($"굴절 방향: {currentDir}");
-            }
-            else if (layerName == "Reflect")
-            {
-                currentDir = Vector2.Reflect(currentDir, hit.normal);
-                Debug.Log($"반사 방향: {currentDir}");
-            }
-
-            currentPos = hit.point + currentDir.normalized;
-        }
-        else
-        {
-            Vector2 endPoint = currentPos + currentDir * laserMaxDistance;
-            points.Add(endPoint);
-            Debug.Log("충돌 없음, 루프 종료");
-            break;
+            Debug.LogWarning("Lazer 오브젝트를 찾을 수 없거나 LineRenderer 없음");
+            return;
         }
 
-        Debug.DrawRay(currentPos, currentDir * 5f, Color.red, 0.5f);
-        //Debug.Break();
+        lineRenderer = laserObj.GetComponent<LineRenderer>();
 
+        Vector3 origin = transform.position;
+        Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mouseWorldPos.z = 0f;
+        Vector2 direction = (mouseWorldPos - origin).normalized;
+
+        List<Vector3> points = new List<Vector3> { origin };
+        Vector2 currentPos = origin;
+        Vector2 currentDir = direction;
+
+        Collider2D lastCollider = null;
+        const float safeOffset = 0.3f; // 🎯 이전보다 더 크게 설정
+
+        for (int i = 0; i < maxReflections; i++)
+        {
+            RaycastHit2D hit = Physics2D.Raycast(currentPos, currentDir, laserMaxDistance, interactionLayers);
+            float refraction=1f;
+            if (hit.collider != null && hit.distance > 0.01f && hit.collider != lastCollider)
+            {
+                points.Add(hit.point);
+                lastCollider = hit.collider;
+
+                string layerName = LayerMask.LayerToName(hit.collider.gameObject.layer);
+                
+                Debug.Log($"[반응 {i}] 충돌 오브젝트: {hit.collider.name} | Layer: {layerName}");
+
+                if (layerName == "Refract")
+                {
+                    if (hit.collider.gameObject.CompareTag("Water"))
+                    {
+                        refraction=2f;
+                    }
+                    
+
+                    currentDir = Refract(currentDir, hit.normal, 1f, refraction);
+                    Debug.Log($"굴절 방향: {currentDir}");
+                }
+                else if (layerName == "Reflect")
+                {
+                    currentDir = Vector2.Reflect(currentDir, hit.normal);
+                    Debug.Log($"반사 방향: {currentDir}");
+                }
+                else if (layerName == "Prism")
+                {
+                    
+                }
+
+                currentPos = hit.point + currentDir.normalized;
+            }
+            else
+            {
+                Vector2 endPoint = currentPos + currentDir * laserMaxDistance;
+                points.Add(endPoint);
+                Debug.Log("충돌 없음, 루프 종료");
+                break;
+            }
+
+            Debug.DrawRay(currentPos, currentDir * 5f, Color.red, 0.5f);
+            //Debug.Break();
+
+        }
+
+        lineRenderer.positionCount = points.Count;
+        lineRenderer.SetPositions(points.ToArray());
+
+        SpawnLightsAlongLaser(points);
     }
-
-    lineRenderer.positionCount = points.Count;
-    lineRenderer.SetPositions(points.ToArray());
-
-    SpawnLightsAlongLaser(points);
-}
     Vector2 Refract(Vector2 incident, Vector2 normal, float n1, float n2)
     {
         incident = incident.normalized;
