@@ -8,7 +8,7 @@ TagManager:
   - bridge
   - Respawn2
   - Mirror
-  - Prism
+  - Water
   layers:
   - Default
   - TransparentFX
@@ -19,7 +19,7 @@ TagManager:
   - Bullet
   - Reflect
   - Refract
-  - 
+  - Prism
   - 
   - 
   - 

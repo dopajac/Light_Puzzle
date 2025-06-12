@@ -190,7 +190,7 @@ MonoBehaviour:
   lightPrefab: {fileID: 8993569665090088666, guid: 9cba051216d00924882dff5e67e62248, type: 3}
   interactionLayers:
     serializedVersion: 2
-    m_Bits: 384
+    m_Bits: 896
   maxReflections: 5
   laserMaxDistance: 100
 --- !u!61 &3485510302086066874

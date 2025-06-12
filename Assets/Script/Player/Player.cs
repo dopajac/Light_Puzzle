@@ -1,25 +1,32 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    [Header("Movement")]
     public float moveSpeed = 5f;
     public float jumpForce = 10f;
     private Rigidbody2D rb;
     private bool isGrounded;
 
+    [Header("Shoot Settings")]
     public Transform respawnPoint;
     [SerializeField] private float bulletSpeed = 10f;
     private int count = 0;
 
+    [Header("Laser & Light Pool")]
     public GameObject LazerPrefab;
-    private LineRenderer lineRenderer;
-
     public GameObject lightPrefab;
+    private LineRenderer lineRenderer;
     private List<GameObject> activeLights = new List<GameObject>();
     private Queue<GameObject> lightPool = new Queue<GameObject>();
-    private int maxLightCount = 100;
+    private Queue<GameObject> laserPool = new Queue<GameObject>();
+    private List<GameObject> activeBranches = new List<GameObject>();
+    [SerializeField] private int maxLightCount = 100;
+    [SerializeField] private int laserPoolSize = 10;
 
+    [Header("Laser Settings")]
     [SerializeField] private LayerMask interactionLayers;
     [SerializeField] private int maxReflections = 5;
     [SerializeField] private float laserMaxDistance = 100f;
@@ -27,13 +34,7 @@ public class Player : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-
-        for (int i = 0; i < maxLightCount; i++)
-        {
-            GameObject obj = Instantiate(lightPrefab);
-            obj.SetActive(false);
-            lightPool.Enqueue(obj);
-        }
+        InitPools();
     }
 
     void Update()
@@ -46,6 +47,7 @@ public class Player : MonoBehaviour
         if (Input.GetMouseButtonUp(1)) DisableLaser();
     }
 
+    // -------------------- Movement --------------------
     void Move()
     {
         float xInput = Input.GetAxisRaw("Horizontal");
@@ -69,12 +71,31 @@ public class Player : MonoBehaviour
 
         if (collision.gameObject.CompareTag("Respawn2"))
         {
-            Transform respawnPoint = GameObject.Find("SpawnPoint")?.transform;
-            if (respawnPoint != null) transform.position = respawnPoint.position;
+            Transform spawn = GameObject.Find("SpawnPoint")?.transform;
+            if (spawn != null) transform.position = spawn.position;
             else Debug.LogError("SpawnPoint 오브젝트를 찾을 수 없습니다.");
         }
     }
 
+    // -------------------- Object Pool Initialization --------------------
+    void InitPools()
+    {
+        for (int i = 0; i < maxLightCount; i++)
+        {
+            GameObject obj = Instantiate(lightPrefab);
+            obj.SetActive(false);
+            lightPool.Enqueue(obj);
+        }
+
+        for (int i = 0; i < laserPoolSize; i++)
+        {
+            GameObject obj = Instantiate(LazerPrefab);
+            obj.SetActive(false);
+            laserPool.Enqueue(obj);
+        }
+    }
+
+    // -------------------- Bullet Shooting --------------------
     void Shoot()
     {
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -91,16 +112,17 @@ public class Player : MonoBehaviour
         count = (count + 1) % GameManager.Instance.bullets.Count;
     }
 
+    // -------------------- Main Laser Logic --------------------
     void FireLaser()
     {
+        DisableLaser();
+
         GameObject laserObj = GameObject.Find("Lazer(Clone)");
-        if (laserObj == null || laserObj.GetComponent<LineRenderer>() == null)
+        if (laserObj == null || !laserObj.TryGetComponent(out lineRenderer))
         {
             Debug.LogWarning("Lazer 오브젝트를 찾을 수 없거나 LineRenderer 없음");
             return;
         }
-
-        lineRenderer = laserObj.GetComponent<LineRenderer>();
 
         Vector3 origin = transform.position;
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -110,89 +132,103 @@ public class Player : MonoBehaviour
         List<Vector3> points = new List<Vector3> { origin };
         Vector2 currentPos = origin;
         Vector2 currentDir = direction;
-
         Collider2D lastCollider = null;
-        const float safeOffset = 0.3f; // 🎯 이전보다 더 크게 설정
 
         for (int i = 0; i < maxReflections; i++)
         {
             RaycastHit2D hit = Physics2D.Raycast(currentPos, currentDir, laserMaxDistance, interactionLayers);
-            float refraction=1f;
+            float refraction = 1f;
+
             if (hit.collider != null && hit.distance > 0.01f && hit.collider != lastCollider)
             {
                 points.Add(hit.point);
                 lastCollider = hit.collider;
 
                 string layerName = LayerMask.LayerToName(hit.collider.gameObject.layer);
-                
-                Debug.Log($"[반응 {i}] 충돌 오브젝트: {hit.collider.name} | Layer: {layerName}");
 
                 if (layerName == "Refract")
                 {
-                    if (hit.collider.gameObject.CompareTag("Water"))
-                    {
-                        refraction=2f;
-                    }
-                    
-
+                    if (hit.collider.CompareTag("Water")) refraction = 2f;
                     currentDir = Refract(currentDir, hit.normal, 1f, refraction);
-                    Debug.Log($"굴절 방향: {currentDir}");
                 }
                 else if (layerName == "Reflect")
                 {
                     currentDir = Vector2.Reflect(currentDir, hit.normal);
-                    Debug.Log($"반사 방향: {currentDir}");
                 }
                 else if (layerName == "Prism")
                 {
-                    
+                    Vector2 refractedDir = Refract(currentDir, hit.normal, 1f, 1.5f);
+                    Vector2 branchDir1 = Quaternion.Euler(0, 0, 15) * refractedDir;
+                    Vector2 branchDir2 = Quaternion.Euler(0, 0, -15) * refractedDir;
+                    Vector2 hitPoint = hit.point;
+
+                    StartCoroutine(FireLaserBranch(hitPoint + refractedDir.normalized * 0.1f, refractedDir, i + 1));
+                    StartCoroutine(FireLaserBranch(hitPoint + branchDir1.normalized * 0.1f, branchDir1, i + 1));
+                    StartCoroutine(FireLaserBranch(hitPoint + branchDir2.normalized * 0.1f, branchDir2, i + 1));
+
+                    points.Add(hit.point);
+                    break;
                 }
 
                 currentPos = hit.point + currentDir.normalized;
             }
             else
             {
-                Vector2 endPoint = currentPos + currentDir * laserMaxDistance;
-                points.Add(endPoint);
-                Debug.Log("충돌 없음, 루프 종료");
+                points.Add(currentPos + currentDir * laserMaxDistance);
                 break;
             }
-
-            Debug.DrawRay(currentPos, currentDir * 5f, Color.red, 0.5f);
-            //Debug.Break();
-
         }
 
         lineRenderer.positionCount = points.Count;
         lineRenderer.SetPositions(points.ToArray());
-
         SpawnLightsAlongLaser(points);
     }
-    Vector2 Refract(Vector2 incident, Vector2 normal, float n1, float n2)
+
+    IEnumerator FireLaserBranch(Vector2 origin, Vector2 direction, int startDepth)
     {
-        incident = incident.normalized;
-        normal = normal.normalized;
+        List<Vector3> points = new List<Vector3> { origin };
+        Vector2 currentPos = origin;
+        Vector2 currentDir = direction;
+        Collider2D lastCollider = null;
 
-        float r = n1 / n2;
-        float cosI = -Vector2.Dot(normal, incident);
-        float sinT2 = r * r * (1f - cosI * cosI);
-
-        if (sinT2 > 1f)
+        for (int i = startDepth; i < maxReflections; i++)
         {
-            Debug.Log("전반사 발생 - 반사로 처리");
-            return Vector2.Reflect(incident, normal); // 반사 fallback
+            RaycastHit2D hit = Physics2D.Raycast(currentPos, currentDir, laserMaxDistance, interactionLayers);
+            if (hit.collider != null && hit.distance > 0.01f && hit.collider != lastCollider)
+            {
+                points.Add(hit.point);
+                lastCollider = hit.collider;
+
+                string layerName = LayerMask.LayerToName(hit.collider.gameObject.layer);
+
+                if (layerName == "Reflect")
+                    currentDir = Vector2.Reflect(currentDir, hit.normal);
+                else if (layerName == "Refract")
+                    currentDir = Refract(currentDir, hit.normal, 1f, 1.5f);
+                else
+                    break;
+
+                currentPos = hit.point + currentDir.normalized * 0.1f;
+            }
+            else
+            {
+                points.Add(currentPos + currentDir * laserMaxDistance);
+                break;
+            }
         }
 
-        float cosT = Mathf.Sqrt(1f - sinT2);
-        Vector2 refracted = r * incident + (r * cosI - cosT) * normal;
-        if (refracted.magnitude < 0.001f)
-        {
-            Debug.Log("굴절 방향 너무 작음 - 반사로 대체");
-            return Vector2.Reflect(incident, normal);
-        }
+        GameObject laserObj = laserPool.Count > 0 ? laserPool.Dequeue() : Instantiate(LazerPrefab);
+        laserObj.SetActive(true);
+        activeBranches.Add(laserObj);
 
-        return refracted;
+        LineRenderer lr = laserObj.GetComponent<LineRenderer>();
+        lr.positionCount = points.Count;
+        lr.SetPositions(points.ToArray());
+
+        yield return null;
     }
+
+    // -------------------- Light Handling --------------------
     void SpawnLightsAlongLaser(List<Vector3> points)
     {
         ClearOldLights();
@@ -204,7 +240,6 @@ public class Player : MonoBehaviour
             Vector3 end = points[i + 1];
             Vector3 dir = (end - start).normalized;
             float distance = Vector3.Distance(start, end);
-
             int lightCount = Mathf.Max(1, Mathf.FloorToInt(distance / lightSpacing));
 
             for (int j = 0; j <= lightCount; j++)
@@ -230,11 +265,41 @@ public class Player : MonoBehaviour
         activeLights.Clear();
     }
 
+    // -------------------- Cleanup --------------------
     void DisableLaser()
     {
         if (lineRenderer != null)
             lineRenderer.positionCount = 0;
 
         ClearOldLights();
+
+        foreach (GameObject branch in activeBranches)
+        {
+            branch.SetActive(false);
+            laserPool.Enqueue(branch);
+        }
+        activeBranches.Clear();
+    }
+
+    // -------------------- Physics Helpers --------------------
+    Vector2 Refract(Vector2 incident, Vector2 normal, float n1, float n2)
+    {
+        incident = incident.normalized;
+        normal = normal.normalized;
+
+        float r = n1 / n2;
+        float cosI = -Vector2.Dot(normal, incident);
+        float sinT2 = r * r * (1f - cosI * cosI);
+
+        if (sinT2 > 1f)
+        {
+            Debug.Log("전반사 발생 - 반사로 처리");
+            return Vector2.Reflect(incident, normal);
+        }
+
+        float cosT = Mathf.Sqrt(1f - sinT2);
+        Vector2 refracted = r * incident + (r * cosI - cosT) * normal;
+
+        return refracted.magnitude < 0.001f ? Vector2.Reflect(incident, normal) : refracted;
     }
 }
