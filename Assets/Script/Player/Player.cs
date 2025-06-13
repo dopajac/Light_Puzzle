@@ -172,6 +172,28 @@ public class Player : MonoBehaviour
                     points.Add(currentPos);
                     continue;
                 }
+                else if (layerName == "Portal")
+                {
+                    // 1. 충돌한 포탈 컴포넌트 가져오기
+                    Portal portalComp = hit.collider.GetComponent<Portal>();
+                    if (portalComp != null && portalComp.linkedPortal != null)
+                    {
+                        // 2. 포탈B 위치
+                        Vector2 exitPos = portalComp.linkedPortal.transform.position;
+
+                        // 3. 궤적에 포탈A 위치(이미 추가됨)에 이어서 포탈B 위치도 표시
+                        points.Add(exitPos);
+
+                        // 4. 포탈B 중심에서 약간 앞으로(진행 방향) 떨어진 위치를 새 origin으로 설정
+                        currentPos = exitPos + currentDir.normalized * 1.5f;
+
+                        // 5. 같은 포탈에 계속 걸리지 않도록 lastCollider 리셋
+                        lastCollider = null;
+
+                        // 6. 이 지점부터 다시 레이저 궤적 계산
+                        continue;
+                    }
+                }
 
                 currentPos = hit.point + currentDir.normalized * 1.5f;
             }
