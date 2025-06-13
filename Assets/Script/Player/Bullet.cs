@@ -10,13 +10,27 @@ public class Bullet : MonoBehaviour
 
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
-        rb.velocity = transform.right * speed;
+        
     }
 
+    
+    void OnEnable()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        rb.velocity = Vector2.zero;
+        
+        StartCoroutine(AutoDisable(3f)); // 3초 후 자동으로 꺼짐
+    }
+
+    IEnumerator AutoDisable(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        gameObject.SetActive(false);
+    }
+    
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Mirror"))
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Reflect"))
         {
             // 1. 입사 방향
             Vector2 inDirection = rb.velocity.normalized;
@@ -34,9 +48,68 @@ public class Bullet : MonoBehaviour
             float angle = Mathf.Atan2(reflectDir.y, reflectDir.x) * Mathf.Rad2Deg;
             rb.rotation = angle;
         }
-        else
+        else if (collision.gameObject.layer == LayerMask.NameToLayer("Refract"))
         {
-            Destroy(gameObject);
+            Debug.Log("반사 충돌");
+            Vector2 inDirection = rb.velocity.normalized;
+            Vector2 normal = collision.contacts[0].normal;
+
+            float n1 = 1.0f;  // 입사 매질 (공기 등)
+            float n2 = 1.5f;  // 굴절 매질 (유리 등)
+
+            float cosI = -Vector2.Dot(normal, inDirection);
+            float sinT2 = (n1 / n2) * Mathf.Sqrt(1f - cosI * cosI);
+
+            if (sinT2 <= 1f) // 전반사 아닌 경우
+            {
+                float cosT = Mathf.Sqrt(1f - sinT2 * sinT2);
+                Vector2 refractDir = (n1 / n2) * inDirection + (n1 / n2 * cosI - cosT) * normal;
+                refractDir.Normalize();
+
+                rb.velocity = refractDir * speed;
+
+                // 방향 회전 적용 (선택)
+                float angle = Mathf.Atan2(refractDir.y, refractDir.x) * Mathf.Rad2Deg;
+                rb.rotation = angle;
+            }
+            else
+            {
+                // 전반사 상황: 그냥 반사시켜도 됨
+                Vector2 reflectDir = Vector2.Reflect(inDirection, normal);
+                rb.velocity = reflectDir * speed;
+                float angle = Mathf.Atan2(reflectDir.y, reflectDir.x) * Mathf.Rad2Deg;
+                rb.rotation = angle;
+            }
+        }
+        else if (collision.gameObject.layer == LayerMask.NameToLayer("Prism"))
+        {
+            Debug.Log("prism in");
+            Vector2 inDirection = rb.velocity.normalized;
+            Vector2 normal = collision.contacts[0].normal;
+
+            float angleOffset = 15f; // 각도 편차 (좌우로 ±15도)
+
+            for (int i = -1; i <= 1; i++) // -1: 왼쪽, 0: 직진, 1: 오른쪽
+            {
+                float angle = Mathf.Atan2(inDirection.y, inDirection.x) * Mathf.Rad2Deg;
+                float newAngle = angle + angleOffset * i;
+                Vector2 newDir = new Vector2(Mathf.Cos(newAngle * Mathf.Deg2Rad), Mathf.Sin(newAngle * Mathf.Deg2Rad)).normalized;
+
+                // 총알 풀에서 가져오기
+                GameObject newBullet = GameManager.Instance.GetPooledBullet(); // GameManager에서 bullet 가져오기
+                if (newBullet != null)
+                {
+                    newBullet.transform.position = transform.position;
+                    newBullet.transform.rotation = Quaternion.Euler(0, 0, newAngle);
+                    newBullet.SetActive(true);
+
+                    Rigidbody2D bulletRb = newBullet.GetComponent<Rigidbody2D>();
+                    bulletRb.velocity = newDir * speed;
+                }
+            }
+
+            // 기존 총알 제거
+            gameObject.SetActive(false);
         }
     }
 }

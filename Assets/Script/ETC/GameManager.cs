@@ -25,6 +25,16 @@ public class GameManager : MonoBehaviour
         Physics2D.IgnoreLayerCollision(LayerMask.NameToLayer("Bullet"), LayerMask.NameToLayer("Player"), true);
     }
 
+    public GameObject GetPooledBullet()
+    {
+        foreach (GameObject bullet in bullets)
+        {
+            if (!bullet.activeInHierarchy)
+                return bullet;
+        }
+        Debug.Log("사용 가능 총알 x");
+        return null; // 사용 가능한 총알 없음
+    }
     public void Clear()
     {
         StageNum++;
