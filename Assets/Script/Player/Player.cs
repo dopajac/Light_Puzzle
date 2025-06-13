@@ -102,9 +102,16 @@ public class Player : MonoBehaviour
         mouseWorldPos.z = 0f;
         Vector2 direction = (mouseWorldPos - transform.position).normalized;
 
-        GameObject bullet = GameManager.Instance.bullets[count];
-        bullet.transform.position = transform.position;
-        bullet.SetActive(true);
+        if (GameManager.Instance.TryGetBullet(out GameObject bullet))
+        {
+            bullet.transform.position = transform.position;
+            bullet.SetActive(true);
+            bullet.GetComponent<Rigidbody2D>().velocity = direction * bulletSpeed;
+        }
+        else
+        {
+            Debug.Log("총알 없음");
+        }
 
         Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
         rb.velocity = direction * bulletSpeed;

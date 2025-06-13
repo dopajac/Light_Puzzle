@@ -8,6 +8,7 @@ public class Bullet : MonoBehaviour
     public float speed = 10f;
     private Rigidbody2D rb;
 
+    private GameObject CollisionObject;
     void Start()
     {
         
@@ -30,6 +31,9 @@ public class Bullet : MonoBehaviour
     
     void OnCollisionEnter2D(Collision2D collision)
     {
+        Debug.Log("충돌 발생 with: " + collision.gameObject.name);
+        Debug.Log("레이어: " + LayerMask.LayerToName(collision.gameObject.layer));
+        
         if (collision.gameObject.layer == LayerMask.NameToLayer("Reflect"))
         {
             // 1. 입사 방향
@@ -85,18 +89,19 @@ public class Bullet : MonoBehaviour
         {
             Debug.Log("prism in");
             Vector2 inDirection = rb.velocity.normalized;
-            Vector2 normal = collision.contacts[0].normal;
 
-            float angleOffset = 15f; // 각도 편차 (좌우로 ±15도)
+            // 여기서 충돌한 대상 저장
+            CollisionObject = collision.gameObject;
 
-            for (int i = -1; i <= 1; i++) // -1: 왼쪽, 0: 직진, 1: 오른쪽
+            float angleOffset = 15f;
+
+            for (int i = -1; i <= 1; i++)
             {
                 float angle = Mathf.Atan2(inDirection.y, inDirection.x) * Mathf.Rad2Deg;
                 float newAngle = angle + angleOffset * i;
                 Vector2 newDir = new Vector2(Mathf.Cos(newAngle * Mathf.Deg2Rad), Mathf.Sin(newAngle * Mathf.Deg2Rad)).normalized;
 
-                // 총알 풀에서 가져오기
-                GameObject newBullet = GameManager.Instance.GetPooledBullet(); // GameManager에서 bullet 가져오기
+                GameObject newBullet = GameManager.Instance.GetPooledBullet();
                 if (newBullet != null)
                 {
                     newBullet.transform.position = transform.position;
@@ -105,11 +110,27 @@ public class Bullet : MonoBehaviour
 
                     Rigidbody2D bulletRb = newBullet.GetComponent<Rigidbody2D>();
                     bulletRb.velocity = newDir * speed;
+
+                    Collider2D bulletCol = newBullet.GetComponent<Collider2D>();
+                    Collider2D targetCol = CollisionObject.GetComponent<Collider2D>();
+
+                    if (bulletCol != null && targetCol != null)
+                    {
+                        Physics2D.IgnoreCollision(bulletCol, targetCol, true);
+                        StartCoroutine(ReenableCollisionAfterDelay(bulletCol, targetCol, 3f));
+                    }
                 }
             }
-
-            // 기존 총알 제거
+            CollisionObject = null;
             gameObject.SetActive(false);
+        }
+    }
+    IEnumerator ReenableCollisionAfterDelay(Collider2D bulletCol, Collider2D targetCol, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (bulletCol != null && targetCol != null)
+        {
+            Physics2D.IgnoreCollision(bulletCol, targetCol, false);
         }
     }
 }

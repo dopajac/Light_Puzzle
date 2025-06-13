@@ -25,6 +25,12 @@ public class GameManager : MonoBehaviour
         Physics2D.IgnoreLayerCollision(LayerMask.NameToLayer("Bullet"), LayerMask.NameToLayer("Player"), true);
     }
 
+    public bool TryGetBullet(out GameObject bullet)
+    {
+        bullet = GetPooledBullet();
+        return bullet != null;
+    }
+    
     public GameObject GetPooledBullet()
     {
         foreach (GameObject bullet in bullets)

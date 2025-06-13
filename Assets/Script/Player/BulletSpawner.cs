@@ -34,7 +34,7 @@ public class BulletSpawner : MonoBehaviour
         // 총알 풀 초기화 (딱 한 번만)
         if (!bulletsInitialized)
         {
-            for (int i = 0; i < 20; i++) // 필요하면 개수도 늘려
+            for (int i = 0; i < 40; i++) // 필요하면 개수도 늘려
             {
                 GameObject bullet = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
                 bullet.SetActive(false); // ← 총알은 풀에 넣되 처음에는 비활성화
