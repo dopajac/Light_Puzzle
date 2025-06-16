@@ -190,9 +190,10 @@ MonoBehaviour:
   lightPrefab: {fileID: 8993569665090088666, guid: 9cba051216d00924882dff5e67e62248, type: 3}
   maxLightCount: 100
   laserPoolSize: 10
+  PortallaserSize: 10
   interactionLayers:
     serializedVersion: 2
-    m_Bits: 1920
+    m_Bits: 3968
   maxReflections: 5
   laserMaxDistance: 20
 --- !u!61 &3485510302086066874
