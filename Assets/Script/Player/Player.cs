@@ -22,9 +22,11 @@ public class Player : MonoBehaviour
     private List<GameObject> activeLights = new List<GameObject>();
     private Queue<GameObject> lightPool = new Queue<GameObject>();
     private Queue<GameObject> laserPool = new Queue<GameObject>();
+    private Queue<GameObject> PortallaserPool = new Queue<GameObject>();
     private List<GameObject> activeBranches = new List<GameObject>();
     [SerializeField] private int maxLightCount = 100;
     [SerializeField] private int laserPoolSize = 10;
+    [SerializeField] private int PortallaserSize = 10;
 
     [Header("Laser Settings")]
     [SerializeField] private LayerMask interactionLayers;
@@ -92,6 +94,12 @@ public class Player : MonoBehaviour
             GameObject obj = Instantiate(LazerPrefab);
             obj.SetActive(false);
             laserPool.Enqueue(obj);
+        }
+        for (int i = 0; i < PortallaserSize; i++)
+        {
+            GameObject obj = Instantiate(LazerPrefab);
+            obj.SetActive(false);
+            PortallaserPool.Enqueue(obj);
         }
     }
 
@@ -174,24 +182,14 @@ public class Player : MonoBehaviour
                 }
                 else if (layerName == "Portal")
                 {
-                    // 1. 충돌한 포탈 컴포넌트 가져오기
                     Portal portalComp = hit.collider.GetComponent<Portal>();
                     if (portalComp != null && portalComp.linkedPortal != null)
                     {
-                        // 2. 포탈B 위치
-                        Vector2 exitPos = portalComp.linkedPortal.transform.position;
+                        // 포탈A에서 멈추고, 현 위치까지 포인트 추가
+                        points.Add(hit.point);
 
-                        // 3. 궤적에 포탈A 위치(이미 추가됨)에 이어서 포탈B 위치도 표시
-                        points.Add(exitPos);
-
-                        // 4. 포탈B 중심에서 약간 앞으로(진행 방향) 떨어진 위치를 새 origin으로 설정
-                        currentPos = exitPos + currentDir.normalized * 1.5f;
-
-                        // 5. 같은 포탈에 계속 걸리지 않도록 lastCollider 리셋
-                        lastCollider = null;
-
-                        // 6. 이 지점부터 다시 레이저 궤적 계산
-                        continue;
+                        // 이 레이저는 여기서 종료됨
+                        break;
                     }
                 }
 
@@ -203,7 +201,23 @@ public class Player : MonoBehaviour
                 break;
             }
         }
+        if (lastCollider != null && LayerMask.LayerToName(lastCollider.gameObject.layer) == "Portal")
+        {
+            Portal portalComp = lastCollider.GetComponent<Portal>();
+            if (portalComp != null && portalComp.linkedPortal != null)
+            {
+                Vector2 newOrigin = (Vector2)portalComp.linkedPortal.transform.position + currentDir.normalized * 0.7f;
 
+                // PortallaserPool에서 오브젝트 가져오기
+                GameObject portalLaserObj = PortallaserPool.Count > 0 ? PortallaserPool.Dequeue() : Instantiate(LazerPrefab);
+                portalLaserObj.SetActive(true);
+                activeBranches.Add(portalLaserObj);
+
+                // 새로운 레이저 쏘기 (type은 그대로 유지)
+                FirePortalLaserBeam(newOrigin, currentDir, portalLaserObj, type);
+            }
+        }
+        
         GameObject laserObj = laserPool.Count > 0 ? laserPool.Dequeue() : Instantiate(LazerPrefab);
         laserObj.SetActive(true);
         activeBranches.Add(laserObj);
@@ -214,7 +228,58 @@ public class Player : MonoBehaviour
 
         SpawnLightsAlongLaser(points);
     }
+    void FirePortalLaserBeam(Vector2 origin, Vector2 direction, GameObject laserObj, int type)
+        {
+            List<Vector3> points = new List<Vector3> { origin };
+            Vector2 currentPos = origin;
+            Vector2 currentDir = direction;
+            Collider2D lastCollider = null;
 
+            for (int i = 0; i < maxReflections; i++)
+            {
+                RaycastHit2D hit = Physics2D.Raycast(currentPos, currentDir, laserMaxDistance, interactionLayers);
+                if (hit.collider != null && hit.distance > 0.01f && hit.collider != lastCollider)
+                {
+                    points.Add(hit.point);
+                    lastCollider = hit.collider;
+
+                    string layerName = LayerMask.LayerToName(hit.collider.gameObject.layer);
+
+                    if (layerName == "Reflect")
+                    {
+                        currentDir = Vector2.Reflect(currentDir, hit.normal);
+                    }
+                    else if (layerName == "Refract")
+                    {
+                        currentDir = Refract(currentDir, hit.normal, 1f, 1.5f);
+                    }
+                    else if (layerName == "Prism")
+                    {
+                        if (type == 1)
+                            currentDir = Quaternion.Euler(0, 0, +15) * currentDir;
+                        else if (type == 2)
+                            currentDir = Quaternion.Euler(0, 0, -15) * currentDir;
+
+                        currentPos = hit.point + currentDir.normalized * 1.5f;
+                        points.Add(currentPos);
+                        continue;
+                    }
+
+                    currentPos = hit.point + currentDir.normalized * 1.5f;
+                }
+                else
+                {
+                    points.Add(currentPos + currentDir * laserMaxDistance);
+                    break;
+                }
+            }
+
+            LineRenderer lr = laserObj.GetComponent<LineRenderer>();
+            lr.positionCount = points.Count;
+            lr.SetPositions(points.ToArray());
+
+            SpawnLightsAlongLaser(points);
+        }
     // -------------------- Light Handling --------------------
     void SpawnLightsAlongLaser(List<Vector3> points)
     {

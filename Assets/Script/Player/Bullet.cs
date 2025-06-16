@@ -8,6 +8,9 @@ public class Bullet : MonoBehaviour
     public float speed = 10f;
     private Rigidbody2D rb;
 
+    private GameObject lastPassedPortal = null;
+    private float portalIgnoreTime = 0.5f; 
+    
     private GameObject CollisionObject;
     void Start()
     {
@@ -126,30 +129,40 @@ public class Bullet : MonoBehaviour
         }
         else if (collision.gameObject.layer == LayerMask.NameToLayer("Portal"))
         {
+            if (collision.gameObject == lastPassedPortal)
+            {
+                // 최근에 나온 포탈이면 무시
+                Debug.Log("최근 포탈 재충돌 무시됨");
+                return;
+            }
+
             Debug.Log("Portal 충돌!");
 
             Portal portal = collision.gameObject.GetComponent<Portal>();
             if (portal != null && portal.linkedPortal != null)
             {
-                // 현재 방향
                 Vector2 inDirection = rb.velocity.normalized;
 
                 // 연결된 포탈 위치로 이동
                 Vector2 exitPos = portal.linkedPortal.transform.position;
-                transform.position = exitPos + inDirection * 0.5f;  // 오프셋으로 약간 앞으로
+                transform.position = exitPos + inDirection * 0.5f;
 
-                // 같은 방향으로 발사
                 rb.velocity = inDirection * speed;
 
-                // 회전 반영 (선택)
                 float angle = Mathf.Atan2(inDirection.y, inDirection.x) * Mathf.Rad2Deg;
                 rb.rotation = angle;
 
-                // 충돌 무시 방지용 임시 disable
-                StartCoroutine(AutoDisable(3f));
+                // 방금 나온 포탈 저장
+                lastPassedPortal = portal.linkedPortal.gameObject;
+                StartCoroutine(ResetLastPortalAfterDelay(portalIgnoreTime));
             }
         }
         
+    }
+    IEnumerator ResetLastPortalAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        lastPassedPortal = null;
     }
     IEnumerator ReenableCollisionAfterDelay(Collider2D bulletCol, Collider2D targetCol, float delay)
     {
