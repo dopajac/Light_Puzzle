@@ -409,9 +409,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LazerPrefab: {fileID: 6620511605608182950, guid: c3180d06d81a24d40918cc732971230a, type: 3}
+  lightPrefab: {fileID: 8993569665090088666, guid: 9cba051216d00924882dff5e67e62248, type: 3}
   laserPoolSize: 10
   portalLaserPoolSize: 10
   coreLaserPoolSize: 10
+  coreLightPoolSize: 20
   Player: {fileID: 0}
   interactionLayers:
     serializedVersion: 2
@@ -3848,11 +3850,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2186636237753038941, guid: 88095be9c473de54b9709e9529657815, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -25.86
+      value: 5.56
       objectReference: {fileID: 0}
     - target: {fileID: 2186636237753038941, guid: 88095be9c473de54b9709e9529657815, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 6.45
+      value: -0.18
       objectReference: {fileID: 0}
     - target: {fileID: 2186636237753038941, guid: 88095be9c473de54b9709e9529657815, type: 3}
       propertyPath: m_LocalPosition.z
