@@ -1,4 +1,4 @@
-// Updated LineSpawner: includes Portal and Core laser handling
+// LineSpawner.cs
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,13 +8,19 @@ public class LineSpawner : MonoBehaviour
 {
     [Header("레이저 세팅")]
     public GameObject LazerPrefab;
+    [SerializeField] private GameObject lightPrefab;
     [SerializeField] private int laserPoolSize = 10;
     [SerializeField] private int portalLaserPoolSize = 10;
     [SerializeField] private int coreLaserPoolSize = 10;
+    [SerializeField] private int coreLightPoolSize = 100;
 
     private Queue<GameObject> laserPool = new Queue<GameObject>();
     private Queue<GameObject> portalLaserPool = new Queue<GameObject>();
     private Queue<GameObject> coreLaserPool = new Queue<GameObject>();
+    private Queue<GameObject> coreLightPool = new Queue<GameObject>();
+
+    private List<GameObject> coreActiveLights = new List<GameObject>();
+    private List<GameObject> coreActiveBranches = new List<GameObject>();
 
     public static LineSpawner Instance { get; private set; }
 
@@ -68,20 +74,35 @@ public class LineSpawner : MonoBehaviour
             obj.SetActive(false);
             coreLaserPool.Enqueue(obj);
         }
+        for (int i = 0; i < coreLightPoolSize; i++)
+        {
+            GameObject obj = Instantiate(lightPrefab);
+            obj.SetActive(false);
+            coreLightPool.Enqueue(obj);
+        }
     }
 
-    public GameObject GetCoreLaser()
+    public void ToggleCoreLaser(Vector2 spawnPos)
     {
-        if (coreLaserPool.Count > 0)
-            return coreLaserPool.Dequeue();
-
-        return Instantiate(LazerPrefab);
+        Vector2 direction = Vector2.right;
+        FireLaserBeam(spawnPos, direction, 3, ref coreActiveLights, ref coreLightPool, coreActiveBranches);
     }
 
-    public void RecycleCoreLaser(GameObject obj)
+    public void DisableCoreLaser()
     {
-        obj.SetActive(false);
-        coreLaserPool.Enqueue(obj);
+        foreach (var light in coreActiveLights)
+        {
+            light.SetActive(false);
+            coreLightPool.Enqueue(light);
+        }
+        coreActiveLights.Clear();
+
+        foreach (var branch in coreActiveBranches)
+        {
+            branch.SetActive(false);
+            coreLaserPool.Enqueue(branch);
+        }
+        coreActiveBranches.Clear();
     }
 
     public void FireLaserBeam(Vector2 origin, Vector2 direction, int type, ref List<GameObject> activeLights, ref Queue<GameObject> lightPool, List<GameObject> activeBranches)
@@ -103,7 +124,6 @@ public class LineSpawner : MonoBehaviour
 
                 if (layerName == "Reflect")
                 {
-                    
                     currentDir = Vector2.Reflect(currentDir, hit.normal);
                 }
                 else if (layerName == "Refract")
@@ -158,7 +178,14 @@ public class LineSpawner : MonoBehaviour
             }
         }
 
-        GameObject laserObj = laserPool.Count > 0 ? laserPool.Dequeue() : Instantiate(LazerPrefab);
+        GameObject laserObj;
+        if (type == 3 && coreLaserPool.Count > 0)
+            laserObj = coreLaserPool.Dequeue();
+        else if (type == 3)
+            laserObj = Instantiate(LazerPrefab);
+        else
+            laserObj = laserPool.Count > 0 ? laserPool.Dequeue() : Instantiate(LazerPrefab);
+
         laserObj.SetActive(true);
         activeBranches.Add(laserObj);
 
@@ -233,12 +260,6 @@ public class LineSpawner : MonoBehaviour
         SpawnLightsAlongLaser(points, ref activeLights, ref lightPool);
     }
 
-    public void RecycleLaser(GameObject laser)
-    {
-        laser.SetActive(false);
-        laserPool.Enqueue(laser);
-    }
-
     void SpawnLightsAlongLaser(List<Vector3> points, ref List<GameObject> activeLights, ref Queue<GameObject> lightPool)
     {
         float lightSpacing = 1.5f;
@@ -263,35 +284,6 @@ public class LineSpawner : MonoBehaviour
         }
     }
 
-    private GameObject activeCoreLaser = null;
-
-    public void ToggleCoreLaser(Vector2 origin)
-    {
-        List<Vector3> points = new List<Vector3> { origin };
-        Vector2 currentPos = origin;
-        Vector2 currentDir = Vector2.right;
-        Collider2D lastCollider = null;
-        
-        if (activeCoreLaser != null)
-        {
-            RecycleCoreLaser(activeCoreLaser);
-            activeCoreLaser = null;
-            return;
-        }
-
-        GameObject laser = GetCoreLaser();
-        laser.SetActive(true);
-
-        LineRenderer lr = laser.GetComponent<LineRenderer>();
-        Vector3 endPos = origin + Vector2.right * 10f;
-
-        lr.positionCount = 2;
-        lr.SetPositions(new Vector3[] { origin, endPos });
-
-        activeCoreLaser = laser;
-    }
-    
-    
     Vector2 Refract(Vector2 incident, Vector2 normal, float n1, float n2)
     {
         incident = incident.normalized;
@@ -325,4 +317,9 @@ public class LineSpawner : MonoBehaviour
     {
         Player = p;
     }
-}
+    public void RecycleLaser(GameObject laser)
+    {
+        laser.SetActive(false);
+        laserPool.Enqueue(laser);
+    }
+} 

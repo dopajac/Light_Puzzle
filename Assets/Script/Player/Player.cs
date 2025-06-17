@@ -1,3 +1,4 @@
+// Player.cs
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,7 +18,6 @@ public class Player : MonoBehaviour
 
     [Header("Laser & Light Pool")]
     public GameObject lightPrefab;
-    private LineRenderer lineRenderer;
     private List<GameObject> activeLights = new List<GameObject>();
     private Queue<GameObject> lightPool = new Queue<GameObject>();
     private List<GameObject> activeBranches = new List<GameObject>();
@@ -69,7 +69,7 @@ public class Player : MonoBehaviour
         {
             Transform spawn = GameObject.Find("SpawnPoint")?.transform;
             if (spawn != null) transform.position = spawn.position;
-            else Debug.LogError("SpawnPoint 오브제트를 찾을 수 없습니다.");
+            else Debug.LogError("SpawnPoint 오브젝트를 찾을 수 없습니다.");
         }
     }
 
@@ -119,8 +119,6 @@ public class Player : MonoBehaviour
 
     void DisableLaser()
     {
-        if (lineRenderer != null) lineRenderer.positionCount = 0;
-
         foreach (GameObject l in activeLights)
         {
             l.SetActive(false);

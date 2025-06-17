@@ -13,6 +13,8 @@ public class PressCoreButton : MonoBehaviour
         coreController = FindObjectOfType<CoreController>();
     }
 
+    private bool coreLaserActive = false;
+
     void Update()
     {
         if (isPlayerNear && Input.GetKeyDown(KeyCode.F))
@@ -20,7 +22,17 @@ public class PressCoreButton : MonoBehaviour
             if (coreController != null && coreController.slider.value >= 1f)
             {
                 Vector2 spawnPos = coreController.Core.transform.position;
-                LineSpawner.Instance.ToggleCoreLaser(spawnPos);
+
+                if (!coreLaserActive)
+                {
+                    LineSpawner.Instance.ToggleCoreLaser(spawnPos); // 레이저 발사
+                    coreLaserActive = true;
+                }
+                else
+                {
+                    LineSpawner.Instance.DisableCoreLaser(); // 레이저 종료
+                    coreLaserActive = false;
+                }
             }
             else
             {
