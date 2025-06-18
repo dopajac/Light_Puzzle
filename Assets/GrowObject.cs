@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,6 +12,13 @@ public class GrowObject : MonoBehaviour
 
     private float lastHitTime = -10f; // 마지막으로 레이저에 맞은 시간
 
+    [SerializeField] private GameObject lightPrefab;
+
+    private void Start()
+    {
+        lightPrefab.SetActive(false);
+    }
+
     public void IncreaseScale(float amount)
     {
         lastHitTime = Time.time;
@@ -18,6 +26,7 @@ public class GrowObject : MonoBehaviour
         Vector3 currentScale = transform.localScale;
         float targetScale = Mathf.Min(MaxGrow, currentScale.x + amount * growSpeed);
         transform.localScale = new Vector3(targetScale, targetScale, currentScale.z);
+        lightPrefab.SetActive(true);
     }
 
     void Update()
