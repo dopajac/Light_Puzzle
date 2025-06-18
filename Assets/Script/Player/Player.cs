@@ -26,7 +26,7 @@ public class Player : MonoBehaviour
     [Header("Laser Settings")]
     [SerializeField] private LayerMask interactionLayers;
     [SerializeField] private int maxReflections = 5;
-    [SerializeField] private float laserMaxDistance = 10f;
+    [SerializeField] private float laserMaxDistance = 20f;
 
     void Start()
     {

@@ -22,17 +22,6 @@ public class PressCoreButton : MonoBehaviour
             if (coreController != null && coreController.slider.value >= 1f)
             {
                 Vector2 spawnPos = coreController.Core.transform.position;
-
-                if (!coreLaserActive)
-                {
-                    LineSpawner.Instance.ToggleCoreLaser(spawnPos); // 레이저 발사
-                    coreLaserActive = true;
-                }
-                else
-                {
-                    LineSpawner.Instance.DisableCoreLaser(); // 레이저 종료
-                    coreLaserActive = false;
-                }
             }
             else
             {
