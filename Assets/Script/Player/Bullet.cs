@@ -157,8 +157,8 @@ public class Bullet : MonoBehaviour
                 StartCoroutine(ResetLastPortalAfterDelay(portalIgnoreTime));
             }
         }
-        
     }
+    
     IEnumerator ResetLastPortalAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
