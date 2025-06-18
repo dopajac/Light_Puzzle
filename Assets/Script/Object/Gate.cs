@@ -5,9 +5,11 @@ public class Gate : MonoBehaviour
 {
     private bool isPlayerNear = false;
     [SerializeField] private GameObject Floating_F;
+
+    [SerializeField] private int TargetCount;
     private void Update()
     {
-        if (isPlayerNear && Input.GetKeyDown(KeyCode.F))
+        if (isPlayerNear && Input.GetKeyDown(KeyCode.F) && TargetCount == 0)
         {
             Debug.Log("게이트와 상호작용 중입니다.");
             
