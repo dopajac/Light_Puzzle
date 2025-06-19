@@ -6,8 +6,6 @@ using UnityEngine.Tilemaps;
 
 public class LIghtBlockOnOff : MonoBehaviour
 {
-    
-
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other is TilemapCollider2D) return;
