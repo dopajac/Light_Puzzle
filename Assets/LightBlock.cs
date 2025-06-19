@@ -7,17 +7,28 @@ public class LightBlock : MonoBehaviour
 {
     public BoxCollider2D boxCollider;
     
-    public SpriteRenderer spriteRenderer;
+    public TilemapRenderer tilemapRenderer;
     
     public TilemapCollider2D tilemapCollider;
 
     public bool isLightOn;
     
-    private void Awake()
+    private void Start()
     {
         boxCollider = GetComponent<BoxCollider2D>();
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        tilemapRenderer = GetComponent<TilemapRenderer>();
         tilemapCollider = GetComponent<TilemapCollider2D>();
+        if (isLightOn == false)
+        {
+            tilemapRenderer.enabled = false;
+            tilemapCollider.enabled = false;
+        }
+        else
+        {
+            
+            tilemapRenderer.enabled = true;
+            tilemapCollider.enabled = true;
+        }
     }
     
     
