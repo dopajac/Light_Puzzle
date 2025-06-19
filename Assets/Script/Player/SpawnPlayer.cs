@@ -58,7 +58,7 @@ public class SpawnPlayer : MonoBehaviour
                 
                 FindObjectOfType<BulletSpawner>().SetPlayer(player);
                 FindObjectOfType<LineSpawner>().SetPlayer(player);
-                FindObjectOfType<CheckPlayerInLight>().SetPlayer(player);
+                FindObjectOfType<CheckPlayerInLight>().SetPlayer(player); 
             }
             else
             {
