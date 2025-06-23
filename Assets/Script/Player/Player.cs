@@ -36,12 +36,17 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if (LightFlicker.Instance != null && LightFlicker.Instance.IsLightOn)
+        if (GameManager.Instance.stageNum == 5)
         {
-            // 빛이 켜졌으면 이동 정지
-            rb.velocity = new Vector2(0f, rb.velocity.y); // X 방향만 멈춤
-            return;
+            if (LightFlicker.Instance != null && LightFlicker.Instance.IsLightOn)
+            {
+                // 빛이 켜졌으면 이동 정지
+                rb.velocity = new Vector2(0f, rb.velocity.y); // X 방향만 멈춤
+                return;
+            }
         }
+
+        
 
         Move();
         Jump();

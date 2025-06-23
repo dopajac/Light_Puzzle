@@ -1,16 +1,22 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
-    private int StageNum = 1;
+
+    public int stageNum = 1;
     public List<GameObject> bullets = new List<GameObject>();
+
+    [SerializeField] public int TargetCount; // 현재 맞춘 타겟 수
+    private int targetMaxCount; // 씬에 존재하는 타겟 총 수
+
+    public bool StageisGateOpen = true;
     
     void Awake()
     {
-        // 싱글톤 중복 방지
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -18,11 +24,42 @@ public class GameManager : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);  // 씬 전환 시에도 유지
+        DontDestroyOnLoad(gameObject); // 씬 변경에도 유지
     }
-    void Start() 
+
+    void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Physics2D.IgnoreLayerCollision(LayerMask.NameToLayer("Bullet"), LayerMask.NameToLayer("Player"), true);
+        CountTargetsInScene();
+    }
+
+    private void CountTargetsInScene()
+    {
+        GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+        targetMaxCount = 0;
+
+        foreach (GameObject obj in allObjects)
+        {
+            if (obj.name.Contains("Target") &&
+                obj.hideFlags == HideFlags.None &&
+                obj.scene.IsValid())
+            {
+                Debug.Log($"[Debug] Found: {obj.name}, Scene: {obj.scene.name}, Active: {obj.activeInHierarchy}");
+                targetMaxCount++;
+            }
+        }
+
+        Debug.Log($"Target 포함 오브젝트 수: {targetMaxCount}");
     }
 
     public bool TryGetBullet(out GameObject bullet)
@@ -30,7 +67,7 @@ public class GameManager : MonoBehaviour
         bullet = GetPooledBullet();
         return bullet != null;
     }
-    
+
     public GameObject GetPooledBullet()
     {
         foreach (GameObject bullet in bullets)
@@ -38,15 +75,34 @@ public class GameManager : MonoBehaviour
             if (!bullet.activeInHierarchy)
                 return bullet;
         }
-        Debug.Log("사용 가능 총알 x");
-        return null; // 사용 가능한 총알 없음
+
+        Debug.Log("사용 가능 총알 없음");
+        return null;
     }
+
     public void Clear()
     {
-        StageNum++;
+        stageNum++;
     }
+
     public int GetStageNum()
     {
-        return StageNum;
+        return stageNum;
     }
+
+    public int GetTargetMaxCount()
+    {
+        return targetMaxCount;
+    }
+
+    public bool CheckGateOpen()
+    {
+        if (GameManager.Instance.TargetCount == GameManager.Instance.GetTargetMaxCount())
+        {
+            StageisGateOpen = true;
+            Debug.Log("게이트가 열렸습니다.");
+        }
+        return StageisGateOpen;
+    }
+
 }

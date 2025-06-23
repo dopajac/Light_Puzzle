@@ -11,8 +11,6 @@ public class CheckPlayerInLight : MonoBehaviour
     [SerializeField] private float detectionDelay = 1f; // 감지 지연 시간 (초)
 
     private bool canDetect = false;
-
-    
     
 
     void Update()

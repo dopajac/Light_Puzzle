@@ -157,6 +157,22 @@ public class Bullet : MonoBehaviour
                 StartCoroutine(ResetLastPortalAfterDelay(portalIgnoreTime));
             }
         }
+        else if (collision.gameObject.layer == LayerMask.NameToLayer("Target"))
+        {
+            Debug.Log("Target 충돌!");
+            Target target = collision.gameObject.GetComponent<Target>();
+            if (target != null)
+            {
+                target.OnTargetLight();
+                GameManager.Instance.CheckGateOpen();
+            }
+            
+            
+        }
+        else
+        {
+            Debug.Log("기타 충돌: " + collision.gameObject.name);
+        }
     }
     
     IEnumerator ResetLastPortalAfterDelay(float delay)

@@ -7,9 +7,19 @@ public class Gate : MonoBehaviour
     [SerializeField] private GameObject Floating_F;
 
     [SerializeField] private int TargetCount;
+    [SerializeField] private GameObject Door;
     private void Update()
     {
-        if (isPlayerNear && Input.GetKeyDown(KeyCode.F) && TargetCount == 0)
+        if (GameManager.Instance.StageisGateOpen)
+        {
+            Door.gameObject.SetActive(false);
+        }
+        else
+        {
+            Door.gameObject.SetActive(true);
+        }
+
+        if (isPlayerNear && Input.GetKeyDown(KeyCode.F) && GameManager.Instance.StageisGateOpen)
         {
             Debug.Log("게이트와 상호작용 중입니다.");
             
@@ -39,4 +49,6 @@ public class Gate : MonoBehaviour
             Debug.Log("게이트에서 멀어짐.");
         }
     }
+    
+    
 }
