@@ -59,9 +59,12 @@ public class Player : MonoBehaviour
     void Move()
     {
         float xInput = Input.GetAxisRaw("Horizontal");
+        float yInput = Input.GetAxisRaw("Vertical");
         Vector2 velocity = rb.velocity;
         velocity.x = xInput * moveSpeed;
+        velocity.y = yInput * moveSpeed;
         rb.velocity = velocity;
+        
     }
 
     void Jump()

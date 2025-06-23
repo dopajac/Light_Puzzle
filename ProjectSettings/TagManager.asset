@@ -9,6 +9,7 @@ TagManager:
   - Respawn2
   - Mirror
   - Water
+  - ladder
   layers:
   - Default
   - TransparentFX

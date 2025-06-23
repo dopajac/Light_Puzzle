@@ -67,7 +67,7 @@ public class PlayerAnimation : MonoBehaviour
         bool isClimbing = isOnLadder && (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) ||
                                          Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow));
 
-        animator.SetBool("Ladder", isClimbing);
+        animator.SetBool("ladder", isClimbing);
     }
 
     private void HandleShoot()
@@ -82,7 +82,8 @@ public class PlayerAnimation : MonoBehaviour
     // ladder 오브젝트에 닿은 상태 체크
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.layer == LayerMask.NameToLayer("ladder"))
+        if (collision.CompareTag("ladder"))
+            
         {
             isOnLadder = true;
         }
@@ -90,7 +91,7 @@ public class PlayerAnimation : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.gameObject.layer == LayerMask.NameToLayer("ladder"))
+        if (collision.CompareTag("ladder"))
         {
             isOnLadder = false;
         }
