@@ -16,12 +16,12 @@ public class LineSpawner : MonoBehaviour
     private Queue<GameObject> coreLaserPool = new Queue<GameObject>();
 
     [Header("Core Light Settings")]
-    [SerializeField] private GameObject lightPrefab;   // Player가 쓰던 것과 같은 프리팹
+    [SerializeField] private GameObject lightPrefab;
     [SerializeField] private int coreLightPoolSize = 100;
-    private Queue<GameObject> coreLightPool   = new Queue<GameObject>();
-    private List<GameObject>  coreActiveLights   = new List<GameObject>();
-    private List<GameObject>  coreActiveBranches = new List<GameObject>();
-    
+    private Queue<GameObject> coreLightPool = new Queue<GameObject>();
+    private List<GameObject> coreActiveLights = new List<GameObject>();
+    private List<GameObject> coreActiveBranches = new List<GameObject>();
+
     public static LineSpawner Instance { get; private set; }
 
     [Header("플레이어 참조")]
@@ -31,11 +31,13 @@ public class LineSpawner : MonoBehaviour
     [SerializeField] private float laserMaxDistance = 10f;
     [SerializeField] private int maxReflections = 5;
 
+    [Header("거울 관련")]
+    private HashSet<RotateMirror> rotatingMirrors = new HashSet<RotateMirror>();
+
     private void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
-
         DontDestroyOnLoad(gameObject);
     }
 
@@ -52,7 +54,7 @@ public class LineSpawner : MonoBehaviour
     void Start()
     {
         InitializeLaserPools();
-        InitCoreLightPool();   // ← 추가
+        InitCoreLightPool();
     }
 
     void InitCoreLightPool()
@@ -91,7 +93,6 @@ public class LineSpawner : MonoBehaviour
     {
         if (coreLaserPool.Count > 0)
             return coreLaserPool.Dequeue();
-
         return Instantiate(LazerPrefab);
     }
 
@@ -107,6 +108,7 @@ public class LineSpawner : MonoBehaviour
         Vector2 currentPos = origin;
         Vector2 currentDir = direction;
         Collider2D lastCollider = null;
+        HashSet<RotateMirror> currentHitMirrors = new HashSet<RotateMirror>();
 
         for (int i = 0; i < maxReflections; i++)
         {
@@ -115,25 +117,16 @@ public class LineSpawner : MonoBehaviour
             {
                 points.Add(hit.point);
                 lastCollider = hit.collider;
-
                 string layerName = LayerMask.LayerToName(hit.collider.gameObject.layer);
 
                 if (layerName == "Reflect")
-                {
-                    
                     currentDir = Vector2.Reflect(currentDir, hit.normal);
-                }
                 else if (layerName == "Refract")
-                {
                     currentDir = Refract(currentDir, hit.normal, 1f, 1.5f);
-                }
                 else if (layerName == "Prism")
                 {
-                    if (type == 1)
-                        currentDir = Quaternion.Euler(0, 0, +15) * currentDir;
-                    else if (type == 2)
-                        currentDir = Quaternion.Euler(0, 0, -15) * currentDir;
-
+                    if (type == 1) currentDir = Quaternion.Euler(0, 0, +15) * currentDir;
+                    else if (type == 2) currentDir = Quaternion.Euler(0, 0, -15) * currentDir;
                     currentPos = hit.point + currentDir.normalized * 1.5f;
                     points.Add(currentPos);
                     continue;
@@ -142,9 +135,7 @@ public class LineSpawner : MonoBehaviour
                 {
                     CoreController core = hit.collider.GetComponent<CoreController>();
                     if (core != null)
-                    {
                         core.IncreaseIntensity(Time.deltaTime * 10f);
-                    }
                     currentPos = hit.point + currentDir.normalized * 1.5f;
                     points.Add(currentPos);
                     break;
@@ -156,11 +147,9 @@ public class LineSpawner : MonoBehaviour
                     {
                         points.Add(hit.point);
                         Vector2 newOrigin = (Vector2)portalComp.linkedPortal.transform.position + currentDir.normalized * 0.7f;
-
                         GameObject portalLaserObj = portalLaserPool.Count > 0 ? portalLaserPool.Dequeue() : Instantiate(LazerPrefab);
                         portalLaserObj.SetActive(true);
                         activeBranches.Add(portalLaserObj);
-
                         FirePortalLaserBeam(newOrigin, currentDir, portalLaserObj, type, ref activeLights, ref lightPool);
                         break;
                     }
@@ -169,11 +158,17 @@ public class LineSpawner : MonoBehaviour
                 {
                     GrowObject grow = hit.collider.GetComponent<GrowObject>();
                     if (grow != null)
-                    {
                         grow.IncreaseScale(Time.deltaTime);
-                    }
-
                     break;
+                }
+                else if (layerName == "MirrorRotation")
+                {
+                    RotateMirror rotateMirror = hit.collider.GetComponent<RotateMirror>();
+                    if (rotateMirror != null)
+                    {
+                        rotateMirror.isRotating = true;
+                        currentHitMirrors.Add(rotateMirror);
+                    }
                 }
 
                 currentPos = hit.point + currentDir.normalized * 1.5f;
@@ -184,6 +179,13 @@ public class LineSpawner : MonoBehaviour
                 break;
             }
         }
+
+        foreach (var mirror in rotatingMirrors)
+        {
+            if (!currentHitMirrors.Contains(mirror))
+                mirror.isRotating = false;
+        }
+        rotatingMirrors = currentHitMirrors;
 
         GameObject laserObj = laserPool.Count > 0 ? laserPool.Dequeue() : Instantiate(LazerPrefab);
         laserObj.SetActive(true);
@@ -202,6 +204,7 @@ public class LineSpawner : MonoBehaviour
         Vector2 currentPos = origin;
         Vector2 currentDir = direction;
         Collider2D lastCollider = null;
+        HashSet<RotateMirror> currentHitMirrors = new HashSet<RotateMirror>();
 
         for (int i = 0; i < maxReflections; i++)
         {
@@ -210,24 +213,16 @@ public class LineSpawner : MonoBehaviour
             {
                 points.Add(hit.point);
                 lastCollider = hit.collider;
-
                 string layerName = LayerMask.LayerToName(hit.collider.gameObject.layer);
 
                 if (layerName == "Reflect")
-                {
                     currentDir = Vector2.Reflect(currentDir, hit.normal);
-                }
                 else if (layerName == "Refract")
-                {
                     currentDir = Refract(currentDir, hit.normal, 1f, 1.5f);
-                }
                 else if (layerName == "Prism")
                 {
-                    if (type == 1)
-                        currentDir = Quaternion.Euler(0, 0, +15) * currentDir;
-                    else if (type == 2)
-                        currentDir = Quaternion.Euler(0, 0, -15) * currentDir;
-
+                    if (type == 1) currentDir = Quaternion.Euler(0, 0, +15) * currentDir;
+                    else if (type == 2) currentDir = Quaternion.Euler(0, 0, -15) * currentDir;
                     currentPos = hit.point + currentDir.normalized * 1.5f;
                     points.Add(currentPos);
                     continue;
@@ -236,9 +231,7 @@ public class LineSpawner : MonoBehaviour
                 {
                     CoreController core = hit.collider.GetComponent<CoreController>();
                     if (core != null)
-                    {
                         core.IncreaseIntensity(Time.deltaTime * 10f);
-                    }
                     currentPos = hit.point + currentDir.normalized * 1.5f;
                     points.Add(currentPos);
                     break;
@@ -247,11 +240,17 @@ public class LineSpawner : MonoBehaviour
                 {
                     GrowObject grow = hit.collider.GetComponent<GrowObject>();
                     if (grow != null)
-                    {
                         grow.IncreaseScale(Time.deltaTime);
-                    }
-
                     break;
+                }
+                else if (layerName == "MirrorRotation")
+                {
+                    RotateMirror rotateMirror = hit.collider.GetComponent<RotateMirror>();
+                    if (rotateMirror != null)
+                    {
+                        rotateMirror.isRotating = true;
+                        currentHitMirrors.Add(rotateMirror);
+                    }
                 }
 
                 currentPos = hit.point + currentDir.normalized * 1.5f;
@@ -262,6 +261,13 @@ public class LineSpawner : MonoBehaviour
                 break;
             }
         }
+
+        foreach (var mirror in rotatingMirrors)
+        {
+            if (!currentHitMirrors.Contains(mirror))
+                mirror.isRotating = false;
+        }
+        rotatingMirrors = currentHitMirrors;
 
         LineRenderer lr = laserObj.GetComponent<LineRenderer>();
         lr.positionCount = points.Count;
@@ -300,68 +306,17 @@ public class LineSpawner : MonoBehaviour
         }
     }
 
-    private GameObject activeCoreLaser = null;
-    
-    public void ToggleCoreLaser(Vector2 origin)
-    {
-        // 이미 켜져 있으면 ―> 전부 끄고 종료
-        if (activeCoreLaser != null)
-        {
-            RecycleCoreLaser(activeCoreLaser);
-            activeCoreLaser = null;
-
-            foreach (GameObject l in coreActiveLights)
-            {
-                l.SetActive(false);
-                coreLightPool.Enqueue(l);
-            }
-            coreActiveLights.Clear();
-
-            foreach (GameObject b in coreActiveBranches)
-            {
-                b.SetActive(false);
-                RecycleLaser(b);
-            }
-            coreActiveBranches.Clear();
-
-            return;
-        }
-
-        // 새 레이저 발사
-        GameObject laserObj = GetCoreLaser();
-        laserObj.SetActive(true);
-        activeCoreLaser = laserObj;
-
-        Vector2 dir = Vector2.right;   // 필요하면 방향 바꿔도 됨
-
-        // Player 레이저와 동일한 로직 사용
-        FireLaserBeam(
-            origin,
-            dir,
-            0,                      // type : 코어는 굳이 분기 안 쓰면 0
-            ref coreActiveLights,
-            ref coreLightPool,
-            coreActiveBranches
-        );
-    }
-    
-    
     Vector2 Refract(Vector2 incident, Vector2 normal, float n1, float n2)
     {
         incident = incident.normalized;
         normal = normal.normalized;
-
         float r = n1 / n2;
         float cosI = -Vector2.Dot(normal, incident);
         float sinT2 = r * r * (1f - cosI * cosI);
-
         if (sinT2 > 1f)
             return Vector2.Reflect(incident, normal);
-
         float cosT = Mathf.Sqrt(1f - sinT2);
-        Vector2 refracted = r * incident + (r * cosI - cosT) * normal;
-
-        return refracted.magnitude < 0.001f ? Vector2.Reflect(incident, normal) : refracted;
+        return r * incident + (r * cosI - cosT) * normal;
     }
 
     private void Update()

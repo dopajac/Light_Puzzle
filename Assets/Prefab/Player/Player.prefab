@@ -190,7 +190,7 @@ MonoBehaviour:
   maxLightCount: 100
   interactionLayers:
     serializedVersion: 2
-    m_Bits: 8064
+    m_Bits: 73600
   maxReflections: 5
   laserMaxDistance: 20
 --- !u!61 &3485510302086066874

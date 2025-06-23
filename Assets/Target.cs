@@ -11,6 +11,7 @@ public class Target : MonoBehaviour
         {
             TargetLight.SetActive(true);
             GameManager.Instance.TargetCount++;
+            
         }
     }
 }
