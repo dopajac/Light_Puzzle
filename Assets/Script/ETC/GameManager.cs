@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -41,6 +42,11 @@ public class GameManager : MonoBehaviour
     {
         Physics2D.IgnoreLayerCollision(LayerMask.NameToLayer("Bullet"), LayerMask.NameToLayer("Player"), true);
         CountTargetsInScene();
+    }
+
+    private void Start()
+    {
+        CheckGateOpen();
     }
 
     private void CountTargetsInScene()
