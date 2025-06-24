@@ -34,10 +34,15 @@ public class LineSpawner : MonoBehaviour
     [Header("거울 관련")]
     private HashSet<RotateMirror> rotatingMirrors = new HashSet<RotateMirror>();
 
-    private void Awake()
+    void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject); // 중복 방지
+            return;
+        }
+
+        Instance = this;
         DontDestroyOnLoad(gameObject);
     }
 
