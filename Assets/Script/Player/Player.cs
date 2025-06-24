@@ -135,6 +135,7 @@ public class Player : MonoBehaviour
         for (int i = 0; i < maxLightCount; i++)
         {
             GameObject obj = Instantiate(lightPrefab);
+            DontDestroyOnLoad(obj);
             obj.SetActive(false);
             lightPool.Enqueue(obj);
         }
