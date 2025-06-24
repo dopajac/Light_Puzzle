@@ -1,4 +1,3 @@
-// Player.cs
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,6 +9,11 @@ public class Player : MonoBehaviour
     public float jumpForce = 10f;
     private Rigidbody2D rb;
     private bool isGrounded;
+
+    [Header("Ladder Settings")]
+    private bool isOnLadder = false;
+    private bool isClimbing = false;
+    public float climbSpeed = 3f;
 
     [Header("Shoot Settings")]
     public Transform respawnPoint;
@@ -28,27 +32,29 @@ public class Player : MonoBehaviour
     [SerializeField] private int maxReflections = 5;
     [SerializeField] private float laserMaxDistance = 20f;
 
+    private Animator animator;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
         InitLightPool();
     }
 
     void Update()
     {
-        if (GameManager.Instance.stageNum == 5)
+        if (GameManager.Instance.stageNum == 5 &&
+            LightFlicker.Instance != null && LightFlicker.Instance.IsLightOn)
         {
-            if (LightFlicker.Instance != null && LightFlicker.Instance.IsLightOn)
-            {
-                // 빛이 켜졌으면 이동 정지
-                rb.velocity = new Vector2(0f, rb.velocity.y); // X 방향만 멈춤
-                return;
-            }
+            rb.velocity = new Vector2(0f, rb.velocity.y);
+            return;
         }
 
-        
+        Move(); // 항상 호출
 
-        Move();
+        if (isOnLadder)
+            Climb();
+
         Jump();
 
         if (Input.GetMouseButtonDown(0)) Shoot();
@@ -58,33 +64,69 @@ public class Player : MonoBehaviour
 
     void Move()
     {
+        if (isClimbing) return; // 사다리 타는 중이면 좌우 이동 X
+
         float xInput = Input.GetAxisRaw("Horizontal");
-        float yInput = Input.GetAxisRaw("Vertical");
         Vector2 velocity = rb.velocity;
         velocity.x = xInput * moveSpeed;
-        velocity.y = yInput * moveSpeed;
         rb.velocity = velocity;
-        
     }
 
     void Jump()
     {
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded && !isClimbing)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             isGrounded = false;
+            animator?.SetTrigger("Jump");
+        }
+    }
+
+    void Climb()
+    {
+        float vInput = Input.GetAxisRaw("Vertical");
+
+        if (Mathf.Abs(vInput) > 0.1f)
+        {
+            isClimbing = true;
+            rb.gravityScale = 0f;
+            rb.velocity = new Vector2(rb.velocity.x, vInput * climbSpeed);
+        }
+        else
+        {
+            isClimbing = false;
+            rb.velocity = new Vector2(rb.velocity.x, 0f);
+        }
+    }
+
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("ladder"))
+        {
+            isOnLadder = true;
+        }
+    }
+
+    void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.CompareTag("ladder"))
+        {
+            isOnLadder = false;
+            isClimbing = false;
+            rb.gravityScale = 1f;
+            
         }
     }
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Ground")) isGrounded = true;
+        if (collision.gameObject.CompareTag("Ground"))
+            isGrounded = true;
 
         if (collision.gameObject.CompareTag("Respawn2"))
         {
             Transform spawn = GameObject.Find("SpawnPoint")?.transform;
             if (spawn != null) transform.position = spawn.position;
-            else Debug.LogError("SpawnPoint 오브젝트를 찾을 수 없습니다.");
         }
     }
 
@@ -110,10 +152,6 @@ public class Player : MonoBehaviour
             bullet.SetActive(true);
             bullet.GetComponent<Rigidbody2D>().velocity = direction * bulletSpeed;
             count = (count + 1) % GameManager.Instance.bullets.Count;
-        }
-        else
-        {
-            Debug.Log("총알 없음");
         }
     }
 

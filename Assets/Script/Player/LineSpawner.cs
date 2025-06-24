@@ -161,13 +161,13 @@ public class LineSpawner : MonoBehaviour
                         grow.IncreaseScale(Time.deltaTime);
                     break;
                 }
-                else if (layerName == "MirrorRotation")
+                if (layerName == "MirrorRotation")
                 {
                     RotateMirror rotateMirror = hit.collider.GetComponent<RotateMirror>();
                     if (rotateMirror != null)
                     {
                         rotateMirror.isRotating = true;
-                        currentHitMirrors.Add(rotateMirror);
+                        rotatingMirrors.Add(rotateMirror); // ✅ 통합 관리
                     }
                 }
 
@@ -179,13 +179,6 @@ public class LineSpawner : MonoBehaviour
                 break;
             }
         }
-
-        foreach (var mirror in rotatingMirrors)
-        {
-            if (!currentHitMirrors.Contains(mirror))
-                mirror.isRotating = false;
-        }
-        rotatingMirrors = currentHitMirrors;
 
         GameObject laserObj = laserPool.Count > 0 ? laserPool.Dequeue() : Instantiate(LazerPrefab);
         laserObj.SetActive(true);
@@ -243,13 +236,13 @@ public class LineSpawner : MonoBehaviour
                         grow.IncreaseScale(Time.deltaTime);
                     break;
                 }
-                else if (layerName == "MirrorRotation")
+                if (layerName == "MirrorRotation")
                 {
                     RotateMirror rotateMirror = hit.collider.GetComponent<RotateMirror>();
                     if (rotateMirror != null)
                     {
                         rotateMirror.isRotating = true;
-                        currentHitMirrors.Add(rotateMirror);
+                        rotatingMirrors.Add(rotateMirror); // ✅ 통합 관리
                     }
                 }
 
@@ -261,13 +254,6 @@ public class LineSpawner : MonoBehaviour
                 break;
             }
         }
-
-        foreach (var mirror in rotatingMirrors)
-        {
-            if (!currentHitMirrors.Contains(mirror))
-                mirror.isRotating = false;
-        }
-        rotatingMirrors = currentHitMirrors;
 
         LineRenderer lr = laserObj.GetComponent<LineRenderer>();
         lr.positionCount = points.Count;

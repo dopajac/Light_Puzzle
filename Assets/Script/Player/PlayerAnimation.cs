@@ -62,11 +62,18 @@ public class PlayerAnimation : MonoBehaviour
         animator.SetTrigger("Fall");
     }
     
+    private bool isClimbing = false;
+
     private void HandleLadder()
     {
-        bool isClimbing = isOnLadder && (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) ||
-                                         Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow));
+        // 사다리에 닿아있고, W/S 키가 눌렸을 경우 climbing 시작
+        if (isOnLadder && (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) ||
+                           Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow)))
+        {
+            isClimbing = true;
+        }
 
+        // Animator에 반영: climbing이 true면 재생됨
         animator.SetBool("ladder", isClimbing);
     }
 
@@ -94,6 +101,8 @@ public class PlayerAnimation : MonoBehaviour
         if (collision.CompareTag("ladder"))
         {
             isOnLadder = false;
+            isClimbing = false; // 사다리에서 벗어나면 climbing 상태도 꺼짐
+            animator.SetBool("ladder", false);
         }
     }
 }
