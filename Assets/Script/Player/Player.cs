@@ -1,15 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
 public class Player : MonoBehaviour
 {
     [Header("Movement")]
     public float moveSpeed = 5f;
-    public float jumpForce = 10f;
+    public float jumpForce = 20f;
     private Rigidbody2D rb;
     private bool isGrounded;
 
+    [Header("Player Light")]
+    public Light2D playerLight;
+    
     [Header("Ladder Settings")]
     private bool isOnLadder = false;
     private bool isClimbing = false;
@@ -43,8 +47,16 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if (GameManager.Instance.stageNum == 5 &&
-            LightFlicker.Instance != null && LightFlicker.Instance.IsLightOn)
+        if (SceneManager.GetActiveScene().buildIndex == 5)
+        {
+            playerLight.gameObject.SetActive(false);
+        }
+        else
+        {
+            playerLight.gameObject.SetActive(true);
+        }
+
+        if (LightFlicker.Instance != null && LightFlicker.Instance.IsLightOn)
         {
             rb.velocity = new Vector2(0f, rb.velocity.y);
             return;
@@ -125,8 +137,7 @@ public class Player : MonoBehaviour
 
         if (collision.gameObject.CompareTag("Respawn2"))
         {
-            Transform spawn = GameObject.Find("SpawnPoint")?.transform;
-            if (spawn != null) transform.position = spawn.position;
+            Respawn();
         }
     }
 
@@ -186,5 +197,23 @@ public class Player : MonoBehaviour
             LineSpawner.Instance.RecycleLaser(branch);
         }
         activeBranches.Clear();
+    }
+    
+    public void Respawn()
+    {
+        respawnPoint = GameObject.Find("SpawnPoint").transform;
+        if (respawnPoint != null)
+        {
+            
+            transform.position = respawnPoint.position;
+            rb.velocity = Vector2.zero;
+            isGrounded = true;
+            isOnLadder = false;
+            isClimbing = false;
+        }
+        else
+        {
+            Debug.LogWarning("Respawn point not set!");
+        }
     }
 }

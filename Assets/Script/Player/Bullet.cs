@@ -163,11 +163,14 @@ public class Bullet : MonoBehaviour
             Target target = collision.gameObject.GetComponent<Target>();
             if (target != null)
             {
-                target.OnTargetLight();
+                target.OnOffLight();
                 GameManager.Instance.CheckGateOpen();
             }
-            
-            
+        }
+        else if (collision.gameObject.CompareTag("Ground"))
+        {
+            Debug.Log("Ground에 충돌 → 풀로 복귀");
+            gameObject.SetActive(false); // 풀로 복귀
         }
         else
         {

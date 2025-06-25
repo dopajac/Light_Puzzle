@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
 public class GameManager : MonoBehaviour
 {
@@ -11,8 +12,8 @@ public class GameManager : MonoBehaviour
     public int stageNum = 1;
     public List<GameObject> bullets = new List<GameObject>();
 
-    [SerializeField] public int TargetCount; // 현재 맞춘 타겟 수
-    private int targetMaxCount; // 씬에 존재하는 타겟 총 수
+    public int TargetCount; // 현재 맞춘 타겟 수
+    [FormerlySerializedAs("targetMaxCount")] public int TargetMaxCount; // 씬에 존재하는 타겟 총 수
 
     public bool StageisGateOpen = true;
     
@@ -41,7 +42,9 @@ public class GameManager : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Physics2D.IgnoreLayerCollision(LayerMask.NameToLayer("Bullet"), LayerMask.NameToLayer("Player"), true);
+        TargetCount = 0;
         CountTargetsInScene();
+        CheckGateOpen();
     }
 
     private void Start()
@@ -52,7 +55,7 @@ public class GameManager : MonoBehaviour
     private void CountTargetsInScene()
     {
         GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
-        targetMaxCount = 0;
+        TargetMaxCount = 0;
 
         foreach (GameObject obj in allObjects)
         {
@@ -61,11 +64,11 @@ public class GameManager : MonoBehaviour
                 obj.scene.IsValid())
             {
                 Debug.Log($"[Debug] Found: {obj.name}, Scene: {obj.scene.name}, Active: {obj.activeInHierarchy}");
-                targetMaxCount++;
+                TargetMaxCount++;
             }
         }
 
-        Debug.Log($"Target 포함 오브젝트 수: {targetMaxCount}");
+        Debug.Log($"Target 포함 오브젝트 수: {TargetMaxCount}");
     }
 
     public bool TryGetBullet(out GameObject bullet)
@@ -98,15 +101,19 @@ public class GameManager : MonoBehaviour
 
     public int GetTargetMaxCount()
     {
-        return targetMaxCount;
+        return TargetMaxCount;
     }
 
     public bool CheckGateOpen()
     {
-        if (GameManager.Instance.TargetCount == GameManager.Instance.GetTargetMaxCount())
+        if (GameManager.Instance.TargetCount >= GameManager.Instance.GetTargetMaxCount())
         {
             StageisGateOpen = true;
             Debug.Log("게이트가 열렸습니다.");
+        }
+        else
+        {
+            StageisGateOpen = false;
         }
         return StageisGateOpen;
     }

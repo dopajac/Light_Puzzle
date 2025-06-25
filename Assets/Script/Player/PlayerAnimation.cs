@@ -22,6 +22,15 @@ public class PlayerAnimation : MonoBehaviour
 
     private void Update()
     {
+        if (LightFlicker.Instance != null && LightFlicker.Instance.IsLightOn)
+        {
+            if (animator != null) animator.speed = 0f; // 애니메이션 정지
+            return;
+        }
+        else
+        {
+            if (animator != null) animator.speed = 1f; // 정상 재생
+        }
         HandleRunAnimation();
         HandleFlip();
         HandleJump();
