@@ -77,6 +77,7 @@ public class LineSpawner : MonoBehaviour
         for (int i = 0; i < laserPoolSize; i++)
         {
             GameObject obj = Instantiate(LazerPrefab);
+            DontDestroyOnLoad(obj);
             obj.SetActive(false);
             laserPool.Enqueue(obj);
         }

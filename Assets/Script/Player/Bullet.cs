@@ -169,6 +169,11 @@ public class Bullet : MonoBehaviour
         }
         else if (collision.gameObject.CompareTag("Ground"))
         {
+            if (collision.gameObject.layer == LayerMask.NameToLayer("LightBlock"))
+            {
+                return;
+            }
+
             Debug.Log("Ground에 충돌 → 풀로 복귀");
             gameObject.SetActive(false); // 풀로 복귀
         }

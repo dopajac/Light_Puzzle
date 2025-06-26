@@ -189,7 +189,7 @@ MonoBehaviour:
   playerLight: {fileID: 4682004854023726957}
   climbSpeed: 3
   respawnPoint: {fileID: 0}
-  bulletSpeed: 5
+  bulletSpeed: 10
   lightPrefab: {fileID: 8993569665090088666, guid: 9cba051216d00924882dff5e67e62248, type: 3}
   maxLightCount: 100
   interactionLayers:
