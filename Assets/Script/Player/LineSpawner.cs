@@ -7,9 +7,9 @@ public class LineSpawner : MonoBehaviour
 {
     [Header("레이저 세팅")]
     public GameObject LazerPrefab;
-    [SerializeField] private int laserPoolSize = 10;
+    [SerializeField] private int laserPoolSize = 15;
     [SerializeField] private int portalLaserPoolSize = 10;
-    [SerializeField] private int coreLaserPoolSize = 10;
+    
 
     private Queue<GameObject> laserPool = new Queue<GameObject>();
     private Queue<GameObject> portalLaserPool = new Queue<GameObject>();
@@ -59,17 +59,7 @@ public class LineSpawner : MonoBehaviour
     void Start()
     {
         InitializeLaserPools();
-        InitCoreLightPool();
-    }
-
-    void InitCoreLightPool()
-    {
-        for (int i = 0; i < coreLightPoolSize; i++)
-        {
-            GameObject obj = Instantiate(lightPrefab);
-            obj.SetActive(false);
-            coreLightPool.Enqueue(obj);
-        }
+        
     }
 
     void InitializeLaserPools()
@@ -84,15 +74,11 @@ public class LineSpawner : MonoBehaviour
         for (int i = 0; i < portalLaserPoolSize; i++)
         {
             GameObject obj = Instantiate(LazerPrefab);
+            DontDestroyOnLoad(obj);
             obj.SetActive(false);
             portalLaserPool.Enqueue(obj);
         }
-        for (int i = 0; i < coreLaserPoolSize; i++)
-        {
-            GameObject obj = Instantiate(LazerPrefab);
-            obj.SetActive(false);
-            coreLaserPool.Enqueue(obj);
-        }
+        
     }
 
     public GameObject GetCoreLaser()
@@ -320,6 +306,12 @@ public class LineSpawner : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Player = GameObject.Find("Player(Clone)");
+        Debug.Log($"[LaserPool 상태 - 씬 {scene.name}] 남은 오브젝트 수: {laserPool.Count}");
+
+        foreach (GameObject laser in laserPool)
+        {
+            Debug.Log($"LaserPool 오브젝트: {laser.name} | 활성상태: {laser.activeSelf}");
+        }
     }
 
     public void SetPlayer(GameObject p)

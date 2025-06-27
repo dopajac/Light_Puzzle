@@ -282,9 +282,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   LazerPrefab: {fileID: 6620511605608182950, guid: c3180d06d81a24d40918cc732971230a, type: 3}
-  laserPoolSize: 10
+  laserPoolSize: 15
   portalLaserPoolSize: 10
-  coreLaserPoolSize: 10
   lightPrefab: {fileID: 8993569665090088666, guid: 9cba051216d00924882dff5e67e62248, type: 3}
   coreLightPoolSize: 100
   Player: {fileID: 0}
