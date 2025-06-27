@@ -16,11 +16,7 @@ public class StartGame : MonoBehaviour
     {
         foreach (KeyCode key in System.Enum.GetValues(typeof(KeyCode)))
         {
-            // 마우스 버튼은 제외 (KeyCode.Mouse0~Mouse6)
-            if (key >= KeyCode.Mouse0 && key <= KeyCode.Mouse6)
-                continue;
-
-            if (Input.GetKeyDown(key))
+            if (Input.GetKeyDown(KeyCode.Space))
                 return true;
         }
         return false;

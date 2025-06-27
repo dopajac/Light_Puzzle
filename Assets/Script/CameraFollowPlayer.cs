@@ -78,7 +78,7 @@ public class CameraFollowPlayer : MonoBehaviour
 
         Vector3 desiredPosition = new Vector3(
             Mathf.Clamp(Player.transform.position.x + offset.x, limitMinX + cameraHalfWidth, limitMaxX - cameraHalfWidth),
-            Mathf.Clamp(Player.transform.position.y + offset.y, limitMinY + cameraHalfHeight, limitMaxY - cameraHalfHeight),
+            Mathf.Clamp(Player.transform.position.y + offset.y, limitMaxY - cameraHalfHeight,limitMinY + cameraHalfHeight ),
             -10);
 
         transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * smoothSpeed);
